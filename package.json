@@ -1,7 +1,6 @@
 {
   "name": "@staski/panel-map",
   "version": "0.1.0",
-  "private": true,
   "license": "MIT",
   "author": "Carl Philipp Staszkiewicz",
   "description": "enable popups on highlighted image areas to display information about instruments in an airplane's instrument panel",
