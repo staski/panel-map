@@ -1,6 +1,9 @@
 # panel-map
 
 A simple Vue component that enbables popups over highlighted areas of an image map. Main pupose is for displaying a virtual airplane instrument panel and provide information about the instruments once you hover over them on the image.
+## Dependencies
+
+panel-map depends on https://github.com/staski/vue-img-mapper as it requires the ids of map areas to be present after initial rendering. 
 ## Usage
 
 Import the component as you normally do, and add it wherever you like in your JSX views as below:
