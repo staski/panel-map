@@ -1,5 +1,5 @@
 <template>
-  <PanelMap  :src="url" :panel-areas="pas" :img-width="1280" :width="1280" :popImgW="500"/>
+  <PanelMap  :src="url" :map="map" :img-width="1280" :width="800" :popImgW="200"/>
   <div id="g52" hidden>
     Garmin G5 Eletronic Flight Instrument System (EFIS), used as a Horizontal Situation Indicator
     (HSI). In this mode the G5 displays lateral deviation from a track selected by a GPS source or a
@@ -51,7 +51,7 @@ var panelAreas = [
     }
   ];
 
-export default {
+  export default {
   name: 'App',
   components: {
     PanelMap,
@@ -60,9 +60,12 @@ export default {
     url() {
       return images.imgCockpitPanel
     },
-    pas() {
-      return panelAreas
-    }
+    map(){
+      return {
+        areas: panelAreas,
+        name: 'panel-demcf',
+      };
+    },
   }
 }
 </script>

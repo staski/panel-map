@@ -23,21 +23,14 @@ export default defineComponent({
             width: Number,
             panelAreas: Array,
             popImgW: Number,
-  },
-  computed: {
-    map() {
-      return {
-        name: 'image-map',
-        areas: this.panelAreas,
-      };
-    },
+            map: Object,
   },
   mounted() {
     nextTick(() => this.getPopList());
   },
   methods: {
     getPopList() {
-      this.panelAreas.forEach(element => {
+      this.map.areas.forEach(element => {
         let scale = this.width / this.imgWidth;
         var placement = 'right';
         var el = document.getElementById(element.id);
@@ -70,6 +63,7 @@ export default defineComponent({
           template:
             '<div class="popover"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-image">' + d2 + '</div><div class="popover-body"></div></div>',
         };
+        console.log(this.$refs);
         new bootstrap.Popover(el, myvar);
       });
     },
