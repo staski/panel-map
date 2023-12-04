@@ -1,23 +1,5 @@
 <template>
-  <PanelMap  :src="url" :map="map" :img-width="1280" :width="800" :popImgW="200"/>
-  <div id="g52" hidden>
-    Garmin G5 Eletronic Flight Instrument System (EFIS), used as a Horizontal Situation Indicator
-    (HSI). In this mode the G5 displays lateral deviation from a track selected by a GPS source or a
-    VOR receiver as well as vertical glideslope.
-    <hr>
-    <p>Click on the instrument to open it's Pilot's Guide.</p>
-  </div>
-  <div id="avidyne" hidden>
-    The Avidyne IFD440 navigator serves multipe functions.
-    <ol>
-      <li>a navigation receiver for analog navigation aids like VOR, ILS as well as a GPS receiver</li>
-      <li>a VHF-communictation transceiver</li>
-      <li>a flight management system, which allows to create and edit flightplans</li>
-      <li>a moving map, displaying the current flight plan and the plane's current location</li>
-    </ol>
-    <hr>
-    <p>Click on the instrument to open it's Pilot's Guide.</p>
-  </div>
+  <PanelMap  :src="url" :map="map"/>
 </template>
 
 <script>
@@ -38,6 +20,8 @@ var panelAreas = [
       img: images.imgDemo,
       title: 'Garmin G5 EFIS (as HSI)',
       href: docs.docDemo,
+      width: "18rem",
+      text: "Example description: this is a Garmin G5 EFIS"
     },
     {
       name: 'avidyne',
@@ -48,6 +32,8 @@ var panelAreas = [
       title: 'Avidyne IFD440 navigator',
       img: images.imgDemo,
       href: docs.docDemo,
+      width: "18rem",
+      text: "Example description: this is an Avidyne IFD440 navigator"
     }
   ];
 
@@ -63,7 +49,7 @@ var panelAreas = [
     map(){
       return {
         areas: panelAreas,
-        name: 'panel-demcf',
+        name: 'panel-dexpl',
       };
     },
   }
