@@ -92,6 +92,21 @@ The `areas` attribute of the `map` prop has to be an array of objects describing
 }
 ```
 
+## Getting started
+
+The easiest way to getting started is cloning this repository and then filling the images, docs, texts with your corresponding data.
+
+```sh
+git clone git@github.com:staski/panel-map.git
+cd vpanel
+npm install
+npm run dev
+```
+
+this will bring up a local server with the demo panel. Bring your own images and docs for your instruments. See https://github.com/staski/panel-map for advanced options. The demo should look like this.
+
+
+![image](https://github.com/staski/vpanel/assets/25439303/4d77bb57-dc7c-4ee6-afee-0064a4921405)
 ## License
 
 Distributed with an MIT License. See LICENSE.txt for more details!
