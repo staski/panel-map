@@ -1,37 +1,22 @@
 # panel-map
 
-A simple Vue component that enbables popups over highlighted areas of an image map. Main pupose is for displaying a virtual airplane instrument panel and provide information about the instruments once you hover over them on the image.
+A simple Vue component that enbables popups over highlighted areas of an image map. The popup will appear on the rightmost column of the screen. Main pupose is for displaying a virtual airplane instrument panel and provide information about the instruments once you hover over them on the image. The component is reactive in the sense that it resizes the main picture when resizing the screen. Please note however, that this component will not produce meaningful results on mobile devies (phones or tablets)
 ## Dependencies
 
-panel-map depends on https://github.com/staski/vue-img-mapper as it requires the ids of map areas to be present after initial rendering. 
+panel-map depends only on [bootstrap](https://getbootstrap.com) for display of the info card on the right side. 
 ## Usage
 
 Import the component as you normally do, and add it wherever you like in your JSX views as below:
 
 ```javascript           
 <template>
-  <PanelMap  :src="url" :panel-areas="pas" :img-width="1280" :width="1280" :popImgW="500"/>
-  <div id="g52" hidden>
-    Garmin G5 Eletronic Flight Instrument System (EFIS), used as a Horizontal Situation Indicator
-    (HSI). In this mode the G5 displays lateral deviation from a track selected by a GPS source or a
-    VOR receiver as well as vertical glideslope.
-    <hr>
-    <p>Click on the instrument to open it's Pilot's Guide.</p>
-  </div>
-  <div id="avidyne" hidden>
-    The Avidyne IFD440 navigator serves multipe functions.
-    <ol>
-      <li>a navigation receiver for analog navigation aids like VOR, ILS as well as a GPS receiver</li>
-      <li>a VHF-communictation transceiver</li>
-      <li>a flight management system, which allows to create and edit flightplans</li>
-      <li>a moving map, displaying the current flight plan and the plane's current location</li>
-    </ol>
-    <hr>
-    <p>Click on the instrument to open it's Pilot's Guide.</p>
-  </div>
+  <PanelMap  :src="url" :map="map"/>
 </template>
 
-import  PanelMap from '@staski/panel-map';
+<script>
+
+
+import  PanelMap from './PanelMap/PanelMap.vue';
 import images from './images';
 import docs from './docs';
 
@@ -46,6 +31,8 @@ var panelAreas = [
       img: images.imgDemo,
       title: 'Garmin G5 EFIS (as HSI)',
       href: docs.docDemo,
+      width: "18rem",
+      text: "Example description: this is a Garmin G5 EFIS"
     },
     {
       name: 'avidyne',
@@ -56,10 +43,12 @@ var panelAreas = [
       title: 'Avidyne IFD440 navigator',
       img: images.imgDemo,
       href: docs.docDemo,
+      width: "18rem",
+      text: "Example description: this is an Avidyne IFD440 navigator"
     }
   ];
 
-export default {
+  export default {
   name: 'App',
   components: {
     PanelMap,
@@ -68,22 +57,25 @@ export default {
     url() {
       return images.imgCockpitPanel
     },
-    pas() {
-      return panelAreas
-    }
+    map(){
+      return {
+        areas: panelAreas,
+        name: 'panel-dexpl',
+      };
+    },
   }
 }
+</script>
 ```
 ## Properties
 
+
 |Props|Type|Description|Default|        
 |---|---|---|---| 
-|***pas***|*Array*|see below|*required*|
-|***img-width***|*Number*|width of the cockpit panel image|*required*|
-|***width***|*Number*|width of the screen display of the cockpit panel|*required*|
-|***popImgW***|*Number*|width of the instrument image displayed in the popup|*required*|
+|***map***|*Object*|object containing a unique name and an array of `areas`, for a description of these `areas`, see below |*required*|
+|***src***|*String*|the URL pointing to the image of the cockpit panel|*required*|
 
-pas has to be provided by an array called panelAreas. panelAreas has to be an array of objects describing the highlighted areas with the following elements:
+The `areas` attribute of the `map` prop has to be an array of objects describing the highlighted areas with the following elements:
 
 ```javascript
 {
@@ -92,9 +84,11 @@ pas has to be provided by an array called panelAreas. panelAreas has to be an ar
   coords: [Number] // the coordinates of the shape as in area map
   fillColor: Color // the color of the shape when highlighted
   id: Number // a unique ID
+  width: String // the width of the image. Used for scaling images to a common size
   title: String // displayed as title of the popup
   img: Image // displayed in the popup
   doc: Document // opened in a new browser tab when clicking the instrument
+  text: String // the description of the instrument displayed in the card 
 }
 ```
 
