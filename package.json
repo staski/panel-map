@@ -1,17 +1,18 @@
 {
-  "name": "@staski/panel-map",
-  "version": "1.0.2",
+  "name": "demo-panel",
+  "version": "1.0.0",
   "license": "MIT",
   "author": "Carl Philipp Staszkiewicz",
-  "description": "enable popups on highlighted image areas to display information about instruments in an airplane's instrument panel",
-  "main": "dist/panel-map.umd.js",
+  "description": "a demo virtual cockpit panel, based on @staski/panel-map",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@staski/panel-map": "1.0.2",
     "bootstrap": "^5.3.2",
+    "cheerio": "^1.0.0-rc.12",
     "vue": "^3.3.4"
   },
   "devDependencies": {

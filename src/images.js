@@ -1,8 +1,7 @@
-import imgCockpitPanel from './images/demoPanel.png';
-import imgDemo from './images/imgDemo.png';
-
+import imgdemodevice1 from './images/demodevice1.png';
+import imgdemodevice2 from './images/demodevice2.png';
 
 export default {
-    'imgCockpitPanel':imgCockpitPanel,
-    'imgDemo':imgDemo,
+  'imgdemodevice1':imgdemodevice1,
+  'imgdemodevice2':imgdemodevice2,
 };

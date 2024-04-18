@@ -1,5 +1,7 @@
-import docDemo from './docs/docDemo.pdf';
+import docdemodevice1 from './docs/demodevice1.pdf';
+import docdemodevice2 from './docs/demodevice2.pdf';
 
 export default {
-    'docDemo':docDemo,
+  'docdemodevice1':docdemodevice1,
+  'docdemodevice2':docdemodevice2,
 };
