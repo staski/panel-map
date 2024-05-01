@@ -12,20 +12,30 @@
 //  
 const fs = require('fs');
 const cheerio = require('cheerio');
+const path = require('path');
+const os = require('os');
+
+const homedir = os.homedir();
+    
+const SRC = `${homedir}/panelMap`;
+const DST = "./src";
 
 var areaElements = [];
 var allInstruments = [];
 
-const imagesjs = `./src/images.js`;
-const docsjs = `./src/docs.js`;
-const textsjs = `./src/texts.js`;
-const panelareasjs = `./src/panelAreas.js`;
+const imagesjs = `${DST}/images.js`;
+const docsjs = `${DST}/docs.js`;
+const textsjs = `${DST}/texts.js`;
+const panelareasjs = `${DST}/panelAreas.js`;
 
 const inputs = process.argv
 
 // create the panelAreas.js file from the html image map
 // areaElements array stores the areas for later use
-const htmlFilePath = inputs[2] || "";
+const htmlFilePath = inputs[2] || `${SRC}/panelmap.html`;
+
+console.log(`use map ${htmlFilePath}`);
+// processHTMLFile returns the JSON string and fills the allInstruments array as a side-effect
 var resultObjects = processHTMLFile(htmlFilePath);
 resultObjects = resultObjects.slice(0,-1);
 
@@ -41,16 +51,21 @@ export {
 	panelAreas,
 };`
 
-fs.renameSync(panelareasjs, `${panelareasjs}.ori`);
+try {
+    fs.renameSync(panelareasjs, `${panelareasjs}.ori`);
+} catch (err){
+    console.log(err, " continues");
+}
 fs.appendFileSync(panelareasjs, str);
 
 
-const imgdir = getFilePath("images");
+
+const imgdir = `${SRC}/images`;
 console.log("images from " + imgdir);
 const imglist = fs. readdirSync(imgdir);
 console.log("imglist: ", imglist);
 
-const docdir = getFilePath("docs");
+const docdir = `${SRC}/docs`;
 console.log("docs from " + docdir);
 const doclist = fs. readdirSync(docdir);
 console.log("doclist: ", doclist);
@@ -60,29 +75,50 @@ var allDocs = [];
 
 console.log("allinstruments: ", allInstruments);
 
-// save old images.js file
-fs.renameSync(imagesjs, `${imagesjs}.ori`);
+try {
+    fs.renameSync(imagesjs, `${imagesjs}.ori`);
+} catch (err){
+    console.log(err, `rename ${imagesjs}. continue`);
+}
 
 // include all images for which an instrument is available in the panel
 imglist.forEach((value, index) => {
-    var name = value.split('.').shift();
+    var name = value.split('.').slice(0,-1).join('');
+    //var ext = value.split('.').slice(-1);
+    if (!fs.existsSync(`${DST}/images`)){    
+        fs.mkdirSync(`${DST}/images`);
+        console.log(`created ${DST}/images`);
+    }
     name = unifyNames(name);
     if (allInstruments.includes(name) || name === "cockpitpanel"){
         allImages.push(name);
+        fs.copyFileSync(`${imgdir}/${value}`,`${DST}/images/${value}`);
+        console.log(`cp ${imgdir}/${value} to `,`${DST}/images/${value}`)
         fs.appendFileSync(imagesjs, `import img${name} from './images/${value}';\n`);
         console.log(`import img${name} from './images/${value}';`);
     }
 });
 
 // save old docs.js file
-fs.renameSync(docsjs, `${docsjs}.ori`);
+try {
+    fs.renameSync(docsjs, `${docsjs}.ori`);
+} catch (err){
+    console.log(err, `rename ${docsjs}. continue`);
+}
 
 // include all docs for which an instrument is available in the panel
 doclist.forEach((value, index) => {
-    var name = value.split('.').shift();
+    var name = value.split('.').slice(0,-1).join('');
+    //var ext = value.split('.').slice(-1);
+    if (!fs.existsSync(`${DST}/docs`)){    
+        fs.mkdirSync(`${DST}/docs`);
+        console.log(`created ${DST}/docs`);
+    }
     name = unifyNames(name);
     if (allInstruments.includes(name)){
         allDocs.push(name);
+        fs.copyFileSync(`${docdir}/${value}`,`${DST}/docs/${value}`);
+        console.log(`cp ${docdir}/${value} to `,`${DST}/docs/${value}`)
         fs.appendFileSync(docsjs, `import doc${name} from './docs/${value}';\n`);
         console.log(`import doc${name} from './docs/${value}';`);
     }
@@ -100,7 +136,11 @@ allDocs.forEach(element => {
 });
 fs.appendFileSync(docsjs,"};\n");
 
-fs.renameSync(textsjs, `${textsjs}.ori`);
+try {
+    fs.renameSync(textsjs, `${textsjs}.ori`);
+} catch (err){
+    console.log(err, `rename ${textsjs}. continue`);
+}
 fs.appendFileSync(textsjs, "\nexport default {\n");
 allImages.forEach(element => {
     fs.appendFileSync(textsjs,`  'title${element}':"${element}",\n`);
