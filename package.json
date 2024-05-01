@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "node ./scripts/crtall.js"
   },
   "dependencies": {
     "@staski/panel-map": "1.0.2",
