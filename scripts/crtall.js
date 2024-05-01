@@ -84,18 +84,21 @@ try {
 // include all images for which an instrument is available in the panel
 imglist.forEach((value, index) => {
     var name = value.split('.').slice(0,-1).join('');
-    //var ext = value.split('.').slice(-1);
     if (!fs.existsSync(`${DST}/images`)){    
         fs.mkdirSync(`${DST}/images`);
         console.log(`created ${DST}/images`);
     }
     name = unifyNames(name);
     if (allInstruments.includes(name) || name === "cockpitpanel"){
-        allImages.push(name);
-        fs.copyFileSync(`${imgdir}/${value}`,`${DST}/images/${value}`);
-        console.log(`cp ${imgdir}/${value} to `,`${DST}/images/${value}`)
-        fs.appendFileSync(imagesjs, `import img${name} from './images/${value}';\n`);
-        console.log(`import img${name} from './images/${value}';`);
+        if (!allImages.includes(name)){
+            allImages.push(name);
+            fs.copyFileSync(`${imgdir}/${value}`,`${DST}/images/${value}`);
+            console.log(`cp ${imgdir}/${value} to `,`${DST}/images/${value}`)
+            fs.appendFileSync(imagesjs, `import img${name} from './images/${value}';\n`);
+            console.log(`import img${name} from './images/${value}';`);
+        } else {
+            console.log(`skip duplicate ${name} - ${value}`);
+        }
     }
 });
 
@@ -116,11 +119,15 @@ doclist.forEach((value, index) => {
     }
     name = unifyNames(name);
     if (allInstruments.includes(name)){
-        allDocs.push(name);
-        fs.copyFileSync(`${docdir}/${value}`,`${DST}/docs/${value}`);
-        console.log(`cp ${docdir}/${value} to `,`${DST}/docs/${value}`)
-        fs.appendFileSync(docsjs, `import doc${name} from './docs/${value}';\n`);
-        console.log(`import doc${name} from './docs/${value}';`);
+        if (!allDocs.includes(name)) {
+            allDocs.push(name);
+            fs.copyFileSync(`${docdir}/${value}`,`${DST}/docs/${value}`);
+            console.log(`cp ${docdir}/${value} to `,`${DST}/docs/${value}`)
+            fs.appendFileSync(docsjs, `import doc${name} from './docs/${value}';\n`);
+            console.log(`import doc${name} from './docs/${value}';`);
+        } else {
+            console.log(`skip duplicate ${name} - ${value}`);
+        }
     }
 });
 
