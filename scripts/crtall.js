@@ -14,6 +14,7 @@ const fs = require('fs');
 const cheerio = require('cheerio');
 const path = require('path');
 const os = require('os');
+const { exit } = require('process');
 
 const homedir = os.homedir();
     
@@ -35,6 +36,11 @@ const inputs = process.argv
 const htmlFilePath = inputs[2] || `${SRC}/panelmap.html`;
 
 console.log(`use map ${htmlFilePath}`);
+
+if (!fs.existsSync(SRC)){
+    console.log(`no ${SRC} => exit`);
+    exit(0);
+}
 // processHTMLFile returns the JSON string and fills the allInstruments array as a side-effect
 var resultObjects = processHTMLFile(htmlFilePath);
 resultObjects = resultObjects.slice(0,-1);
