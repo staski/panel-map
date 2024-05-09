@@ -6,6 +6,7 @@
   "description": "a demo virtual cockpit panel, based on @staski/panel-map",
   "scripts": {
     "dev": "vite",
+    "buildlib": "vite --config vite.config-lib.js build",
     "build": "vite build",
     "preview": "vite preview",
     "postinstall": "node ./scripts/crtall.js"
