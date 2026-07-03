@@ -71,7 +71,7 @@ export default defineComponent({
     this.width = window.innerWidth - 480;
     window.addEventListener('resize', this.onResize);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('resize', this.onResize);
   },
   methods: { 
