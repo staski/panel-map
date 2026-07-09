@@ -98,9 +98,9 @@ def load_areas(path):
     with open(path) as f:
         data = json.load(f)
     if isinstance(data, list):
-        return "panel", data
+        return "panel", None, data
     if isinstance(data, dict):
-        return data.get("name", "panel"), data.get("areas", [])
+        return data.get("name", "panel"), data.get("image"), data.get("areas", [])
     die("areas file must be a JSON list or an object with an 'areas' key")
 
 
@@ -189,26 +189,37 @@ def render_overlay(image_path, areas, out_path):
 
 def main():
     p = argparse.ArgumentParser(description="Scaffold a panel image-map from a photo.")
-    p.add_argument("--image", required=True, help="path to the cockpit panel photo")
+    p.add_argument("--image", help="path to the cockpit panel photo "
+                                    "(defaults to the areas file's 'image' field)")
     p.add_argument("--areas", help="JSON file describing the instrument regions")
     p.add_argument("--dims", action="store_true", help="just print WIDTHxHEIGHT and exit")
     p.add_argument("--outdir", default=".", help="where to write panelmap.html / overlay.png")
     p.add_argument("--no-overlay", action="store_true", help="skip rendering the overlay PNG")
     args = p.parse_args()
 
-    if not os.path.isfile(args.image):
-        die(f"image not found: {args.image}")
+    # Load areas first so the manifest's "image" field can supply the photo.
+    map_name, manifest_image, raw = (None, None, None)
+    if args.areas:
+        if not os.path.isfile(args.areas):
+            die(f"areas file not found: {args.areas}")
+        map_name, manifest_image, raw = load_areas(args.areas)
 
-    w, h = image_size(args.image)
+    image = args.image
+    if not image and manifest_image:
+        # resolve a manifest-relative image path against the areas file's dir
+        image = manifest_image if os.path.isabs(manifest_image) else \
+            os.path.join(os.path.dirname(os.path.abspath(args.areas)), manifest_image)
+    if not image:
+        die("no image given: pass --image or set 'image' in the areas file")
+    if not os.path.isfile(image):
+        die(f"image not found: {image}")
+
+    w, h = image_size(image)
     if args.dims:
         print(f"{w}x{h}")
         return
     if not args.areas:
         die("--areas is required unless --dims is given")
-    if not os.path.isfile(args.areas):
-        die(f"areas file not found: {args.areas}")
-
-    map_name, raw = load_areas(args.areas)
     if not raw:
         die("areas file contains no areas")
     areas = validate(raw)
@@ -216,12 +227,12 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
     html_path = os.path.join(args.outdir, "panelmap.html")
     with open(html_path, "w") as f:
-        f.write(render_html(map_name, os.path.basename(args.image), w, h, areas))
+        f.write(render_html(map_name, os.path.basename(image), w, h, areas))
     print(f"wrote {html_path}  ({len(areas)} areas, image {w}x{h})")
 
     if not args.no_overlay:
         overlay_path = os.path.join(args.outdir, "overlay.png")
-        if render_overlay(args.image, areas, overlay_path):
+        if render_overlay(image, areas, overlay_path):
             print(f"wrote {overlay_path}")
 
 

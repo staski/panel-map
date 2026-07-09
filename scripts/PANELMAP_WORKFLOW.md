@@ -1,69 +1,94 @@
 # Building a panel map from a cockpit photo
 
-The tedious part of creating a new virtual panel is authoring `panelmap.html` —
-measuring every instrument's pixel box by hand. This workflow removes that toil
-by pairing a **vision pass** (identify the instruments) with a **scaffolding
-tool** (`panelmap_from_image.py`) that handles all the deterministic plumbing.
+The tedious part of creating a new virtual panel used to be authoring
+`panelmap.html` — measuring every instrument's pixel box by hand and then
+hand-filling descriptions. This workflow replaces that with a single canonical
+source, **`areas.json`**, produced by a vision pass and consumed by two tools.
+
+## `areas.json` is the source of truth
+
+One hand-editable file describes the whole panel — geometry, labels,
+descriptions, and asset references:
+
+```json
+{
+  "name": "panel",
+  "image": "cockpitPanel.png",
+  "areas": [
+    {
+      "title": "Airspeed Indicator",
+      "shape": "circle",
+      "coords": [232, 100, 60],
+      "text": "Shows indicated airspeed in knots.",
+      "img":  "asi.png",
+      "doc":  "asi.pdf"
+    },
+    { "title": "Avidyne IFD540", "shape": "rect", "coords": [893, 63, 1197, 202] }
+  ]
+}
+```
+
+- `title`, `shape` (`rect` | `circle`), `coords` are required per area.
+- `coords`: `circle` = `[cx, cy, r]`, `rect` = `[x1, y1, x2, y2]`, in the image's
+  natural pixel space.
+- `text`, `img`, `doc` are optional (description shown in the popup, popup image,
+  and manual PDF opened on click).
+- Top-level `image` names the panel background photo.
 
 ## The pipeline
 
 ```
-cockpit photo ──▶ vision detection ──▶ areas.json ──▶ panelmap_from_image.py ──▶ panelmap.html + overlay.png
-                     (Claude)                             (this repo)                        │
-                                                                                            ▼
-                                                                              verify overlay, correct labels
-                                                                                            │
-                                                                                            ▼
-                                                                     ~/panelMap/panelmap.html ──▶ crtall.js
+                                    ┌─▶ panelmap_from_image.py ─▶ panelmap.html + overlay.png   (preview / verify)
+cockpit photo ─▶ vision ─▶ areas.json ┤
+                (Claude)             └─▶ panelareas_from_json.js ─▶ panelAreas.js (+ images.js / docs.js)   (build inputs)
 ```
+
+Both tools read the same `areas.json`, so the map, the preview, and the
+generated Vue inputs never drift apart.
 
 ## Steps
 
-1. **Get the image dimensions** (optional, handy when sanity-checking coords):
-   ```sh
-   python3 scripts/panelmap_from_image.py --image panel.jpg --dims
-   # 1280x511
-   ```
+1. **Detect instruments → `areas.json`.** Have Claude look at the photo and emit
+   the manifest above, using `INSTRUMENT_IDENTIFICATION.md` to recognize and
+   label instruments (shape rules, common-instrument cues). (Need the pixel size
+   while checking coords? `python3 scripts/panelmap_from_image.py --image panel.jpg --dims`.)
 
-2. **Detect instruments → `areas.json`.** Have Claude look at the photo and emit
-   a regions file. Coordinates are in the image's natural pixel space; round
-   gauges are `circle` = `[cx, cy, r]`, screens/radios are `rect` =
-   `[x1, y1, x2, y2]`:
-   ```json
-   {
-     "name": "panel",
-     "areas": [
-       {"title": "Airspeed Indicator", "shape": "circle", "coords": [232, 100, 60]},
-       {"title": "Avidyne IFD540",     "shape": "rect",   "coords": [893, 63, 1197, 202]}
-     ]
-   }
-   ```
-
-3. **Generate the map + overlay:**
+2. **Preview & verify:**
    ```sh
-   python3 scripts/panelmap_from_image.py \
-       --image panel.jpg --areas areas.json --outdir ./out
+   python3 scripts/panelmap_from_image.py --areas areas.json --outdir ./out
    # wrote ./out/panelmap.html  (N areas, image WxH)
    # wrote ./out/overlay.png
    ```
-   `panelmap.html` is emitted in the exact `<area title shape coords>` format
-   that `crtall.js` consumes. `overlay.png` draws every box + label on the photo
-   so you can verify placement at a glance.
+   `overlay.png` draws every box + label on the photo. Geometry is usually
+   close; instrument *labels* often need a human (the model can't always tell a
+   G5 from a GI-275, or read a faded radio's model number). Edit `areas.json`
+   and re-run. The image comes from the manifest's `image` field, or pass
+   `--image` to override.
 
-4. **Verify & correct.** Eyeball `overlay.png`. Geometry is usually close;
-   instrument *labels* often need a human (the model can't always tell a G5 from
-   a GI-275, or read a faded radio's model number). Edit `areas.json` and re-run.
-   The tool validates as it goes — wrong coord counts, unknown shapes, and
-   duplicate titles (which collide in `crtall.js`, since it keys by title) are
-   reported instead of silently producing a broken map.
+3. **Generate the Vue build inputs:**
+   ```sh
+   node scripts/panelareas_from_json.js --areas areas.json --outdir ./src
+   ```
+   Emits `panelAreas.js` with `title`/`text` inlined as literals, plus
+   `images.js` / `docs.js` (only when areas reference an `img` / `doc`, since
+   those carry the static imports Vite needs to bundle the assets). Existing
+   files are backed up to `*.ori` first.
 
-5. **Feed into the existing generator.** Drop the finished `panelmap.html` into
-   `~/panelMap/` alongside `images/` and `docs/`, then run `crtall.js` to
-   generate `panelAreas.js` / `images.js` / `docs.js` / `texts.js`.
+## Two ways to reach `panelAreas.js`
+
+- **areas.json-first (preferred):** `panelareas_from_json.js` goes straight from
+  the manifest to `panelAreas.js`. Descriptions live in `areas.json`, assets are
+  referenced explicitly, and there is no `texts.js` stub to fill in afterward.
+- **Legacy HTML route:** drop `panelmap.html` into `~/panelMap/` (with `images/`
+  and `docs/`) and run `crtall.js`. This still works, but it re-derives
+  everything from the HTML, matches assets by filename, and stubs `texts.js`.
 
 ## Notes
 
-- Overlay rendering needs Pillow (`pip3 install pillow`). `--dims` and
-  `panelmap.html` generation work with no dependencies.
+- Overlay rendering needs Pillow (`pip3 install pillow`). `--dims`,
+  `panelmap.html`, and `panelareas_from_json.js` work with no dependencies.
 - The `<img src>` / `width` / `height` in `panelmap.html` are only for browser
   preview; `crtall.js` reads just the `<area>` elements.
+- Both generators validate as they go — bad coord counts, unknown shapes, and
+  duplicate/colliding titles are reported instead of silently producing a broken
+  map.
