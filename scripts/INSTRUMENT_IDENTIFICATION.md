@@ -87,11 +87,15 @@ round glass displays: attitude + HSI) is equally common.
   knob; e.g. King **KX155**.
 - **GPS Navigator** — a screen with soft-key labels; Garmin **GNS/GTN** or Avidyne
   **IFD** (the IFD540 shows `AVIDYNE` and `FMS  MAP  AUX` soft-keys).
-- **Transponder** — 4-digit squawk code display, `IDENT`, `ALT`/`STBY`/`ON`.
-  **Key tell: a quadratic numeric keypad (`0`–`9`) for entering the squawk code** —
-  that block of number keys distinguishes the transponder from adjacent radios,
-  which have knobs/soft-keys but no full number pad. e.g. **Trig TT31**,
-  **Garrecht VT2000**.
+- **Transponder** — 4-digit squawk-code display with `IDENT` and
+  `ALT`/`STBY`/`ON`/`GND` mode keys (these are the reliable, model-independent
+  cues). **Some models add a quadratic numeric keypad (`0`–`9`) for entering the
+  code — when present, that number-pad block is a strong positive marker for a
+  transponder** (adjacent radios have knobs/soft-keys but no full number pad).
+  This is model-specific, though: the **Garrecht VT2000** has the keypad, whereas
+  the **Trig TT31** uses a rotary knob plus a few buttons and has *no* keypad — so
+  a keypad's *absence* does not rule out a transponder; fall back to the squawk
+  display + IDENT/mode keys.
 - **Autopilot** — amber/segmented mode display with a row of mode buttons
   (`AP`, `HDG`, `NAV`, `APR`, `REV`, `ALT`) and often `UP`/`DN` trim keys; e.g.
   Bendix/King KAP-series.

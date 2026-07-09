@@ -65,6 +65,17 @@ generated Vue inputs never drift apart.
    and re-run. The image comes from the manifest's `image` field, or pass
    `--image` to override.
 
+   **Optional — snap circles to their bezels:** hand-estimated circle centers
+   and radii drift by a few pixels. `panelmap_refine.py` uses the dark-bezel /
+   lighter-panel contrast to snap each `circle` to its true outer bezel:
+   ```sh
+   python3 scripts/panelmap_refine.py --areas areas.json --outdir ./out
+   # wrote ./out/areas.refined.json + ./out/refine_overlay.png (yellow=seed, green=refined)
+   ```
+   It never overwrites your `areas.json` (writes `areas.refined.json`) and always
+   emits a before/after overlay to eyeball — see its header for known limitations
+   (strong-inner-ring gauges, yoke occlusion).
+
 3. **Generate the Vue build inputs:**
    ```sh
    node scripts/panelareas_from_json.js --areas areas.json --outdir ./src
