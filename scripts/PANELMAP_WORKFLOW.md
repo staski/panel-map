@@ -73,8 +73,14 @@ generated Vue inputs never drift apart.
    # wrote ./out/areas.refined.json + ./out/refine_overlay.png (yellow=seed, green=refined)
    ```
    It never overwrites your `areas.json` (writes `areas.refined.json`) and always
-   emits a before/after overlay to eyeball — see its header for known limitations
-   (strong-inner-ring gauges, yoke occlusion).
+   emits a before/after overlay to eyeball. Two methods (`--method`):
+   - `ring` (default) — edge-fits the outer bezel; accurate when the seed is
+     already close, but small capture range (won't fix a large drift) and can
+     catch an inner ring on low-contrast gauges.
+   - `bbox` — bounded bounding-box, then inscribes a circle that never exceeds
+     the seed radius; recovers badly-drifted seeds and stays *inside* the
+     instrument (slightly conservative/smaller). Prefer this when the initial
+     circles are drifted by a large fraction of their radius.
 
 3. **Generate the Vue build inputs:**
    ```sh

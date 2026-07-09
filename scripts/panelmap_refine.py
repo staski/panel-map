@@ -9,28 +9,36 @@ tool fixes that geometrically: it takes each `circle` area in an areas.json as a
 the lighter-gray panel — to find the true outer bezel edge and snap the center
 and radius to it.
 
-Method (per circle):
-  1. Cast rays outward from the seed center at many angles.
-  2. On each ray, find the radius of the strongest dark->light step within a band
-     around the seed radius — that's the bezel/panel edge for that angle.
-  3. Robustly fit a circle (algebraic Kasa fit + iterative outlier rejection) to
-     the collected edge points. Rays spoiled by markings, screws, adjacent
-     instruments, or yoke occlusion fall out as outliers.
-  4. Sanity-clamp: if the fit wanders too far from the seed, keep the seed and
-     flag it (better an honest un-refined circle than a confidently wrong one).
+Two methods (choose with --method):
+
+  ring (default) — edge-fit to the OUTER bezel:
+    1. Cast rays outward from the seed center at many angles.
+    2. On each ray, find the radius of the strongest dark->light step within a
+       band around the seed radius — the bezel/panel edge for that angle.
+    3. Robustly fit a circle (Kasa fit + iterative outlier rejection); rays
+       spoiled by markings, screws, neighbours or occlusion fall out.
+    4. Sanity-clamp + angular-coverage guard: distrustful fits keep the seed.
+    Chases the true outer bezel, so it is accurate when the seed is already
+    close, but has a small capture range (won't fix a large, ~half-radius drift)
+    and can catch an inner ring on low-contrast gauges.
+
+  bbox — bounded bounding-box, then inscribe SMALLER:
+    1. Otsu-threshold a window to find dark bezel pixels; grow the dark component
+       but CAP its reach near the seed (stops dark glass displays / yokes from
+       merging into a giant blob).
+    2. Center = MEDIAN of the component pixels (robust to one-sided merges /
+       occlusion); radius = robust half-spread, min of the two axes, shrunk, and
+       NEVER larger than the seed (so the circle stays *inside* the instrument).
+    Recovers badly-drifted seeds better and, by construction, never outgrows the
+    instrument — at the cost of slightly conservative (smaller) circles.
 
 Only `circle` areas are refined; `rect` areas are copied through unchanged.
-
-Known limitations (v1) — always eyeball the overlay:
-  * Gauges with strong concentric inner rings (e.g. a CDI's compass card /
-    glideslope scale) *and* weak bezel/panel contrast can snap to an inner ring
-    and come out too small.
-  * Partial occlusion (a control yoke covering part of a gauge) can pull the
-    center toward the visible side; the coverage guard only catches gaps > 150°.
-  For those, override the refined value with the seed by hand.
+Whichever method: always eyeball the overlay — this does not replace human
+verification. Overriding a bad refine with the seed by hand is expected.
 
 Usage:
   python3 scripts/panelmap_refine.py --image panel.png --areas areas.json --outdir ./out
+  python3 scripts/panelmap_refine.py --areas areas.json --method bbox --outdir ./out
 
 Outputs:
   <outdir>/areas.refined.json   the areas.json with refined circle coords
@@ -195,12 +203,109 @@ def refine_circle(img, cx, cy, r, angles=120, max_center_shift=0.45, radius_tol=
     return fcx, fcy, fr, len(pts)
 
 
+def _otsu(vals):
+    """Otsu threshold over a list of 0-255 gray values (splits dark bezel from
+    the lighter panel/face without a hand-tuned parameter)."""
+    hist = [0] * 256
+    for v in vals:
+        hist[v] += 1
+    total = len(vals)
+    sum_all = sum(i * hist[i] for i in range(256))
+    sumB = wB = 0
+    maxvar = -1.0
+    thr = 0
+    for t in range(256):
+        wB += hist[t]
+        if wB == 0:
+            continue
+        wF = total - wB
+        if wF == 0:
+            break
+        sumB += t * hist[t]
+        var = wB * wF * ((sumB / wB) - ((sum_all - sumB) / wF)) ** 2
+        if var > maxvar:
+            maxvar = var
+            thr = t
+    return thr
+
+
+def refine_circle_bbox(img, cx, cy, r):
+    """Bounded bounding-box refine: isolate the dark bezel as a growth-capped
+    component, take a robust median center, and inscribe a circle that never
+    exceeds the seed radius (so it stays inside the instrument). Returns
+    (ncx, ncy, nr, npixels) or None."""
+    from collections import deque
+    cap = 1.30 * r                      # max reach of the component from the seed
+    half = int(cap) + 2
+    x0, y0 = max(0, int(cx - half)), max(0, int(cy - half))
+    x1, y1 = min(img.W - 1, int(cx + half)), min(img.H - 1, int(cy + half))
+    ww, hh = x1 - x0 + 1, y1 - y0 + 1
+    if ww < 8 or hh < 8:
+        return None
+    px = img.px
+    thr = _otsu([px[x0 + i, y0 + j] for j in range(hh) for i in range(ww)])
+    scx, scy = int(cx) - x0, int(cy) - y0
+
+    def dark(i, j):
+        return px[x0 + i, y0 + j] < thr and math.hypot(i - scx, j - scy) <= cap
+
+    seen = [[False] * hh for _ in range(ww)]
+    best = None
+    for i in range(ww):
+        for j in range(hh):
+            if dark(i, j) and not seen[i][j]:
+                q = deque([(i, j)])
+                seen[i][j] = True
+                pi = []
+                pj = []
+                mn_i = mx_i = i
+                mn_j = mx_j = j
+                while q:
+                    a, b = q.popleft()
+                    pi.append(a)
+                    pj.append(b)
+                    mn_i = min(mn_i, a); mx_i = max(mx_i, a)
+                    mn_j = min(mn_j, b); mx_j = max(mx_j, b)
+                    for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        na, nb = a + da, b + db
+                        if 0 <= na < ww and 0 <= nb < hh and not seen[na][nb] and dark(na, nb):
+                            seen[na][nb] = True
+                            q.append((na, nb))
+                # the target component's bbox must span the seed center
+                if mn_i <= scx <= mx_i and mn_j <= scy <= mx_j:
+                    if best is None or len(pi) > len(best[0]):
+                        best = (pi, pj)
+    if best is None:
+        return None
+    pi, pj = best
+    pi.sort()
+    pj.sort()
+
+    def pct(a, p):
+        n = len(a)
+        return a[min(n - 1, max(0, int(p * n)))]
+
+    mcx = x0 + pct(pi, 0.5)
+    mcy = y0 + pct(pj, 0.5)                          # robust median center
+    xr = (pct(pi, 0.95) - pct(pi, 0.05)) / 2.0
+    yr = (pct(pj, 0.95) - pct(pj, 0.05)) / 2.0
+    nr = min(0.90 * min(xr, yr), 0.95 * r)          # inscribe & never exceed seed
+    if nr < 0.4 * r or math.hypot(mcx - cx, mcy - cy) > 0.9 * r:
+        return None
+    return mcx, mcy, nr, len(pi)
+
+
 def main():
     p = argparse.ArgumentParser(description="Snap circle areas to the instrument bezel.")
     p.add_argument("--image", help="panel photo (defaults to the areas file's 'image')")
     p.add_argument("--areas", required=True, help="areas.json to refine")
     p.add_argument("--outdir", default=".", help="where to write refined json + overlay")
-    p.add_argument("--angles", type=int, default=120, help="rays per circle (default 120)")
+    p.add_argument("--method", choices=["ring", "bbox"], default="ring",
+                   help="ring = edge-fit the outer bezel (default); "
+                        "bbox = bounded bounding-box, inscribe smaller (better for "
+                        "large drift, never outgrows the instrument)")
+    p.add_argument("--angles", type=int, default=120,
+                   help="rays per circle for the ring method (default 120)")
     args = p.parse_args()
 
     if not os.path.isfile(args.areas):
@@ -225,7 +330,10 @@ def main():
         if str(a.get("shape", "")).lower() != "circle":
             continue
         cx, cy, r = a["coords"]
-        res = refine_circle(img, cx, cy, r, angles=args.angles)
+        if args.method == "bbox":
+            res = refine_circle_bbox(img, cx, cy, r)
+        else:
+            res = refine_circle(img, cx, cy, r, angles=args.angles)
         title = a.get("title", "?")
         if res is None:
             report.append((title, (cx, cy, r), None, 0))
