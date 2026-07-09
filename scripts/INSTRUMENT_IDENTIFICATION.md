@@ -18,6 +18,11 @@ Detecting a panel has two parts with very different reliability:
 - **Labels (what each box *is*)** — an educated guess. Recognition cues below help,
   but **model numbers and ambiguous glass should be human-confirmed.** When in
   doubt, read the branding/label text printed on the unit itself.
+- **Placement** — every box must sit **on the instrument it names**. Before
+  emitting an area, confirm the box actually covers that unit, not an empty panel
+  area, a placard, or a neighbouring instrument. A named unit floating over blank
+  panel, or two areas landing on the same spot, are red flags — and a misplaced
+  box usually means the *real* instrument got missed too.
 
 Always generate the `overlay.png` and have a human eyeball it before the map is
 used downstream.
@@ -130,6 +135,29 @@ How to find the boundary between two stacked units:
 
 When unsure, prefer splitting at a clear bezel seam over lumping: an over-lumped
 box makes several instruments respond as one blob and mislabels all but one.
+
+## Placement & mislabel pitfalls
+
+Things that are commonly boxed by mistake, or boxed in the wrong place:
+
+- **Warning / annunciator panels are not instruments.** A block of small coloured
+  (red/amber) segment lights — often top-centre, with labels like `OIL P`, low
+  volts, low vacuum — is an annunciator, not a gauge or a clock. Do **not** map it
+  as the chronometer. The **chronometer** is a *separate round instrument* with a
+  digital time readout in a round bezel, commonly top-left. (On the D-EGPS panel
+  the top-centre red annunciator was wrongly boxed as "Chronometer / OAT" while
+  the real round chronometer top-left was missed.)
+- **Do not name an autopilot from a lone knob.** Call a unit an autopilot only
+  when you can see its **mode-button row** (`AP`, `HDG`, `NAV`, `APR`, `REV`,
+  `ALT`). A round selector knob plus a small display describes many things (OAT
+  probe, fuel selector, dimmer, encoder) — a lone knob is not enough, and the
+  real autopilot usually lives in the avionics stack. (On the D-EGPS panel an
+  autopilot box was placed on a centre-panel knob far from the actual autopilot.)
+- **Skip placards, switches, breakers, vents, and registration text.** "SMOKING
+  PROHIBITED", "REMOVE CONTROL LOCK", lighting/master switch rows, circuit
+  breakers, air vents, and the aircraft registration are not instruments.
+- **Empty / plugged instrument holes** (a blank round cutout or a covered hole)
+  are not instruments — do not map them.
 
 ## Notes for extension
 
