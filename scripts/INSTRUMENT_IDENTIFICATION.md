@@ -102,6 +102,35 @@ round glass displays: attitude + HSI) is equally common.
 - **ADF Receiver** and **DME** — frequency/distance displays; e.g. King **KN62A**
   DME.
 
+### Splitting a stacked avionics column (avoid over-lumping)
+
+Radios and navigators are stacked as separate **line-replaceable units (LRUs)**,
+each in its **own rectangular bezel**. Map **one box per unit**, not one box for
+the whole stack. The most common over-lumping mistake is a single box that
+swallows a screen *plus* the radio/keypad below it.
+
+How to find the boundary between two stacked units:
+
+- **Bezel seams.** Each LRU has its own bezel; there is a visible horizontal
+  seam / mounting rail / gap between units. Split there.
+- **Control-type changes mark a new unit.** A jump from a screen, to a row of
+  tuning knobs, to a `0`–`9` keypad almost always crosses an LRU boundary.
+- **A touchscreen navigator has no separate keypad below it.** All-in-one
+  touchscreen GPS/NAV/COM units (e.g. **Avidyne IFD540**, **Garmin GTN** series)
+  carry their soft-keys and knobs on their *own* bezel. A distinct unit *below*
+  such a screen — with its own bezel, display and keypad/knobs — is a
+  **different** radio. (On the D-EGPS panel a **Garmin GNC255A** nav/com sat
+  under the IFD540 and was wrongly merged into it, because the keypad was assumed
+  to belong to the IFD.)
+- **But one continuous bezel = one unit.** An integrated navigator whose screen
+  and keypad share a single unbroken bezel (e.g. a **Garmin GNS430/530**) is one
+  LRU — do not split it.
+- **Per-unit branding / screws.** Separate brand-model text, or a row of mounting
+  screws bordering a sub-region, is strong evidence it is its own unit.
+
+When unsure, prefer splitting at a clear bezel seam over lumping: an over-lumped
+box makes several instruments respond as one blob and mislabels all but one.
+
 ## Notes for extension
 
 - Add new instruments and brand/model cues under the sections above.
