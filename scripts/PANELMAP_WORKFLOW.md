@@ -50,8 +50,13 @@ generated Vue inputs never drift apart.
 
 1. **Detect instruments → `areas.json`.** Have Claude look at the photo and emit
    the manifest above, using `INSTRUMENT_IDENTIFICATION.md` to recognize and
-   label instruments (shape rules, common-instrument cues). (Need the pixel size
-   while checking coords? `python3 scripts/panelmap_from_image.py --image panel.jpg --dims`.)
+   label instruments (shape rules, common-instrument cues, and the *completeness*
+   checklist for finding every round gauge). **Zoom in** — crop each instrument
+   cluster and magnify it (e.g. 3–4×) before finalizing; it reveals gauges the
+   full-frame view misses (partial/occluded ones) and gives noticeably better
+   centers and radii, so the seeds often need no geometric refine at all. (Need
+   the pixel size while checking coords?
+   `python3 scripts/panelmap_from_image.py --image panel.jpg --dims`.)
 
 2. **Preview & verify:**
    ```sh
@@ -74,9 +79,11 @@ generated Vue inputs never drift apart.
    ```
    It never overwrites your `areas.json` (writes `areas.refined.json`) and always
    emits a before/after overlay to eyeball. Two methods (`--method`):
-   - `ring` (default) — edge-fits the outer bezel; accurate when the seed is
-     already close, but small capture range (won't fix a large drift) and can
-     catch an inner ring on low-contrast gauges.
+   - `ring` (default) — a **do-no-harm** tightening pass: edge-fits the outer
+     bezel but is *coverage-preserving*, so it only adjusts a circle when the
+     result still covers the seed's dial (a good, well-centered seed is kept as
+     is rather than decentered). Small capture range — it won't fix a large
+     drift; use `bbox` for that.
    - `bbox` — bounded bounding-box, then inscribes a circle that never exceeds
      the seed radius; recovers badly-drifted seeds and stays *inside* the
      instrument (slightly conservative/smaller). Prefer this when the initial

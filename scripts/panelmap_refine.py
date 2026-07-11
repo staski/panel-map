@@ -18,9 +18,12 @@ Two methods (choose with --method):
     3. Robustly fit a circle (Kasa fit + iterative outlier rejection); rays
        spoiled by markings, screws, neighbours or occlusion fall out.
     4. Sanity-clamp + angular-coverage guard: distrustful fits keep the seed.
-    Chases the true outer bezel, so it is accurate when the seed is already
-    close, but has a small capture range (won't fix a large, ~half-radius drift)
-    and can catch an inner ring on low-contrast gauges.
+    5. Coverage-preserving ("do no harm"): the refine is accepted only if it
+       still covers >= ~92% of the seed disk, so a small decentering shift can
+       never push part of a well-placed instrument's dial outside the circle.
+    A safe *tightening* pass: it will improve or confirm a good seed, and simply
+    keep the seed when it cannot help. It has a small capture range and will NOT
+    recover a large (~half-radius) drift — that is what bbox is for.
 
   bbox — bounded bounding-box, then inscribe SMALLER:
     1. Otsu-threshold a window to find dark bezel pixels; grow the dark component
@@ -157,7 +160,24 @@ def solve3(M, b):
     return [a[i][3] / a[i][i] for i in range(3)]
 
 
-def refine_circle(img, cx, cy, r, angles=120, max_center_shift=0.45, radius_tol=0.45):
+def _seed_coverage(cx, cy, r0, fcx, fcy, fr):
+    """Fraction of the SEED disk (cx,cy,r0) that the refined disk (fcx,fcy,fr)
+    still covers. 1.0 = the refined circle fully contains the seed."""
+    d = math.hypot(fcx - cx, fcy - cy)
+    if d >= r0 + fr:
+        return 0.0
+    if d <= abs(fr - r0):
+        return 1.0 if fr >= r0 else (fr * fr) / (r0 * r0)
+    r1, r2 = r0, fr
+    a1 = r1 * r1 * math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1))
+    a2 = r2 * r2 * math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2))
+    a3 = 0.5 * math.sqrt(max(0.0, (-d + r1 + r2) * (d + r1 - r2) *
+                             (d - r1 + r2) * (d + r1 + r2)))
+    return (a1 + a2 - a3) / (math.pi * r0 * r0)
+
+
+def refine_circle(img, cx, cy, r, angles=120, max_center_shift=0.45,
+                  radius_tol=0.45, coverage_min=0.92):
     """Return (ncx, ncy, nr, inliers) or None if the fit is untrustworthy."""
     rlo, rhi = r * 0.72, r * 1.40
     min_step = 18  # minimum dark->light contrast to accept an edge
@@ -199,6 +219,13 @@ def refine_circle(img, cx, cy, r, angles=120, max_center_shift=0.45, radius_tol=
     max_gap = max([angs[0] + 2 * math.pi - angs[-1]] +
                   [angs[i + 1] - angs[i] for i in range(len(angs) - 1)])
     if max_gap > math.radians(150):
+        return None
+    # coverage-preserving ("do no harm"): a good seed's disk must stay almost
+    # fully covered by the refined circle. This blocks the small decentering
+    # shifts that push part of a well-placed instrument's dial/scale outside the
+    # circle — ring should only tighten an already-good circle, never make it
+    # worse. (Recovering a genuinely drifted seed is bbox's job.)
+    if _seed_coverage(cx, cy, r, fcx, fcy, fr) < coverage_min:
         return None
     return fcx, fcy, fr, len(pts)
 
@@ -352,7 +379,7 @@ def main():
     print("\ncircle refinements (seed -> refined, Δcenter, Δr, inliers):")
     for title, seed, ref, inl in report:
         if ref is None:
-            print(f"  {title:28s} seed {seed}  ->  KEPT SEED (no confident fit)")
+            print(f"  {title:28s} seed {seed}  ->  KEPT SEED (refine not a safe improvement)")
         else:
             dc = math.hypot(ref[0] - seed[0], ref[1] - seed[1])
             dr = ref[2] - seed[2]

@@ -47,6 +47,25 @@ round glass displays: attitude + HSI) is equally common.
 > Judge the shape from the **display/bezel outline**, not the screw positions —
 > if the glass itself is round, it's a GI-275.
 
+## Completeness — find every round instrument
+
+Missing instruments is a common first-shot failure. Round gauges are easy to
+under-count because clusters are dense and yokes hide some. Work systematically:
+
+- **Read the cluster as a grid.** Instruments sit in a regular row×column layout.
+  Enumerate **every cell** and account for each — an instrument box, or a clear
+  reason it is empty (a blank/plugged hole). Don't stop at the obvious "six".
+- **A six-pack is 2×3, but panels often add columns.** Extra columns commonly
+  hold a second altimeter, an HSI, a VOR/CDI, an RMI/ADF, or engine gauges — so
+  a left cluster can be 2×4 or more. Count the columns in each row.
+- **Map round gauges hidden behind the control yokes/columns.** A yoke crossing a
+  gauge leaves a partial bezel arc on each side — treat it as one full circle and
+  box it through the occlusion. These are the most-often-missed instruments.
+- **Zoom in to catch them.** Crop and magnify each cluster (3–4×); gauges and
+  faint bezels invisible at full-frame become obvious.
+- **Cross-check right-side / engine clusters too** (manifold pressure, tach, EGT,
+  OAT, fuel/oil) — not just the primary flight group.
+
 ## Common GA instruments — recognition cues
 
 ### The "six-pack" (round analog gauges)
