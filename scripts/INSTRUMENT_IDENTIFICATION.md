@@ -81,18 +81,28 @@ under-count because clusters are dense and yokes hide some. Work systematically:
 - **Heading Indicator / Directional Gyro** — round; compass card with `N E S W`
   and a fixed aircraft/lubber line.
 - **Vertical Speed Indicator (VSI)** — round; `VERTICAL SPEED`, `UP`/`DOWN`,
-  `100 FT PER MIN`; needle rests at zero (9 o'clock).
+  `100 FT PER MIN`; needle rests at zero (9 o'clock). **Key tell: the scale `0`
+  sits at the 9 o'clock position with short curved up/down arrows radiating from
+  that zero** (climb above, descent below). Those arrows disambiguate a VSI from
+  a compass/nav gauge even when it is largely hidden behind a yoke — don't
+  mislabel a yoke-occluded VSI as a VOR/CDI.
 
 ### Navigation indicators (round)
 
-- **CDI / VOR indicator** — round; vertical course-deviation needle; `TO`/`FROM`
-  flag. **Key tell: a small circular `OBS` course-selector knob in the lower-left
-  corner of the bezel** — the presence of that knob reliably marks a CDI (vs. a
-  plain heading/compass display, which has no OBS knob).
+- **CDI / VOR indicator** — round; a **fixed vertical lubber line** with a
+  **horizontal scale** the needle moves across to show lateral course / cross-track
+  deviation; often a `TO`/`FROM` flag. **Key tell: a small circular `OBS`
+  course-selector knob in the lower-left corner of the bezel** — that knob
+  reliably marks a CDI (vs. a plain heading/compass display, which has no OBS
+  knob). Do **not** mistake a CDI for an **RMI**: an RMI has a *rotating* compass
+  card with bearing pointer(s) to a station; a fixed vertical line + horizontal
+  cross-track scale is a CDI.
 - **CDI with Glideslope** — as above plus a **horizontal** glideslope needle for
   ILS approaches (two needles forming a cross).
 - **HSI (Horizontal Situation Indicator)** — round; combines heading card and
-  course-deviation needle in one instrument.
+  course-deviation needle in one instrument. Only call it an HSI if the compass
+  card actually **rotates/slaves to heading**; a fixed-card course indicator —
+  even one with a glideslope needle — is a plain **CDI**, not an HSI.
 - **Magnetic Compass** — round wet compass, usually top-center of the panel or on
   the windscreen post; a panel-mounted *repeater* can appear elsewhere.
 
@@ -106,7 +116,9 @@ under-count because clusters are dense and yokes hide some. Work systematically:
 ### Avionics stack (rectangular units)
 
 - **Audio Panel** — row of `COM`/`NAV` selector buttons, `MIC`/`PHONE`; e.g.
-  Bendix/King **KMA24**.
+  Bendix/King **KMA24**. KMA24 layout specifically: marker-beacon buttons
+  (`A`/`O`/`M` = airway/outer/middle) on the **left**, a rotary audio-source
+  selector knob on the **right**, and **two rows of push-buttons** in the middle.
 - **Nav/Com Radio** — active/standby frequency displays with a flip-flop swap
   knob; e.g. King **KX155**.
 - **GPS Navigator** — a screen with soft-key labels; Garmin **GNS/GTN** or Avidyne
@@ -120,11 +132,18 @@ under-count because clusters are dense and yokes hide some. Work systematically:
   the **Trig TT31** uses a rotary knob plus a few buttons and has *no* keypad — so
   a keypad's *absence* does not rule out a transponder; fall back to the squawk
   display + IDENT/mode keys.
-- **Autopilot** — amber/segmented mode display with a row of mode buttons
-  (`AP`, `HDG`, `NAV`, `APR`, `REV`, `ALT`) and often `UP`/`DN` trim keys; e.g.
-  Bendix/King KAP-series.
+- **Autopilot** — a row of mode buttons (`ON/OFF`, `HDG`, `NAV`, `APR`, `REV`,
+  `ALT`) with a display and often `UP`/`DN` trim keys; e.g. Bendix/King
+  KAP-series, or **S-TEC** (e.g. the **S-TEC 50**, identifiable by its `ON/OFF`,
+  `ALT`, `NAV` buttons). The mode-button row is the reliable cue — a lone knob is
+  not (see Placement pitfalls).
 - **ADF Receiver** and **DME** — frequency/distance displays; e.g. King **KN62A**
   DME.
+- **Traffic / awareness display** — a small screen showing nearby traffic
+  (FLARM / ADS-B / transponder-based). Frequently an **octagonal** (or square)
+  bezel mounted *among the flight instruments* (e.g. right next to the altimeter),
+  not in the radio stack; e.g. **Garrecht TRX 2000**. The octagonal outline is a
+  strong shape cue.
 
 ### Splitting a stacked avionics column (avoid over-lumping)
 
