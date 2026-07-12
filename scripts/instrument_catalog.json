@@ -1,0 +1,243 @@
+{
+  "_comment": "Maps instrument types to a standard picture, a standard description text, and (for avionics) a documentation file. Used to auto-fill an areas.json's img/text/doc from each area's title (see scripts/enrich_areas.js and PANELMAP_WORKFLOW.md). Paths are relative to the served app base (BASE_URL), so images/docs live in the server's images/ and docs/ subdirs and can be swapped without rebuilding the app. 'match' holds normalised keywords (lower-case, punctuation/space stripped); the first entry whose keyword is contained in a normalised area title wins, searched avionics -> engine -> standard, most-specific first.",
+
+  "avionics": {
+    "gi275_backup_switch": {
+      "match": ["backupswitch", "standbyswitch"],
+      "image": "images/gi275_backup_switch.png",
+      "text": "Backup / standby-power switch for the GI-275 glass display — engages the display's standby battery if ship power is lost."
+    },
+    "garmin_gi275": {
+      "match": ["gi275"],
+      "image": "images/gi275.png",
+      "doc": "docs/gi275.pdf",
+      "text": "Garmin GI-275 electronic flight instrument — a round glass display that can serve as attitude indicator, HSI/CDI, MFD or engine display depending on configuration. Includes a standby battery for continued operation if ship power is lost."
+    },
+    "garmin_g5": {
+      "match": ["g5"],
+      "image": "images/g5.png",
+      "doc": "docs/g5.pdf",
+      "text": "Garmin G5 electronic flight instrument — a square glass display serving as an attitude indicator or as an HSI/DG."
+    },
+    "garmin_gns530": {
+      "match": ["gns530"],
+      "image": "images/gns530.png",
+      "doc": "docs/gns530.pdf",
+      "text": "Garmin GNS 530 — GPS/NAV/COM navigator with a colour moving-map display, VHF nav/com radio and IFR-approach-capable GPS."
+    },
+    "garmin_gns430": {
+      "match": ["gns430"],
+      "image": "images/gns430.png",
+      "doc": "docs/gns430.pdf",
+      "text": "Garmin GNS 430 — GPS/NAV/COM navigator with a colour moving-map display, VHF nav/com radio and IFR-approach-capable GPS (smaller-screen sibling of the GNS 530)."
+    },
+    "garmin_gtn750": {
+      "match": ["gtn750"],
+      "image": "images/gtn750.png",
+      "doc": "docs/gtn750.pdf",
+      "text": "Garmin GTN 750 — large touchscreen GPS/NAV/COM navigator with moving map, charts and IFR approaches."
+    },
+    "garmin_gtn650": {
+      "match": ["gtn650"],
+      "image": "images/gtn650.png",
+      "doc": "docs/gtn650.pdf",
+      "text": "Garmin GTN 650 — touchscreen GPS/NAV/COM navigator with moving map and IFR approaches."
+    },
+    "garmin_gnc355": {
+      "match": ["gnc355", "gnc"],
+      "image": "images/gnc355.png",
+      "doc": "docs/gnc355.pdf",
+      "text": "Garmin GNC 355 — GPS navigator with a VHF COM radio and IFR-approach GPS, but no VHF NAV (VOR/ILS) receiver."
+    },
+    "avidyne_ifd540": {
+      "match": ["ifd540"],
+      "image": "images/ifd540.png",
+      "doc": "docs/ifd540.pdf",
+      "text": "Avidyne IFD540 — touchscreen GPS/NAV/COM navigator (FMS/MAP/AUX) with moving map and IFR approaches; a slide-in replacement for the GNS 530."
+    },
+    "avidyne_ifd440": {
+      "match": ["ifd440"],
+      "image": "images/ifd440.png",
+      "doc": "docs/ifd440.pdf",
+      "text": "Avidyne IFD440 — touchscreen GPS/NAV/COM navigator; a slide-in replacement for the GNS 430."
+    },
+    "garrecht_trx2000": {
+      "match": ["trx2000", "trx"],
+      "image": "images/trx2000.png",
+      "doc": "docs/trx2000.pdf",
+      "text": "Garrecht TRX 2000 traffic display — shows nearby traffic (FLARM / ADS-B / transponder-based) as a collision-awareness aid."
+    },
+    "garrecht_vt2000": {
+      "match": ["vt2000"],
+      "image": "images/vt2000.png",
+      "doc": "docs/vt2000.pdf",
+      "text": "Garrecht/Air Avionics VT2000 Mode-S transponder with a numeric squawk keypad."
+    },
+    "trig_tt31": {
+      "match": ["tt31"],
+      "image": "images/tt31.png",
+      "doc": "docs/tt31.pdf",
+      "text": "Trig TT31 Mode-S transponder with ADS-B Out; a slide-in replacement for the KT76A."
+    },
+    "garmin_gtx_transponder": {
+      "match": ["gtx", "transponder"],
+      "image": "images/gtx.png",
+      "doc": "docs/gtx.pdf",
+      "text": "Garmin GTX transponder — replies to ATC/TCAS interrogations with the selected squawk; ALT mode reports pressure altitude (Mode C/S) and many models add ADS-B Out."
+    },
+    "bendixking_kx155": {
+      "match": ["kx155", "kx165", "kx"],
+      "image": "images/kx155.png",
+      "doc": "docs/kx155.pdf",
+      "text": "Bendix/King KX 155 — VHF nav/com radio with active/standby COM and NAV frequencies and a VOR/LOC/glideslope display."
+    },
+    "bendixking_kma24": {
+      "match": ["kma24", "kma", "audiopanel"],
+      "image": "images/kma24.png",
+      "doc": "docs/kma24.pdf",
+      "text": "Bendix/King KMA 24 audio panel — selects COM/NAV audio sources and the marker-beacon receiver (A/O/M)."
+    },
+    "bendixking_kn62a": {
+      "match": ["kn62a", "kn62", "dme"],
+      "image": "images/kn62a.png",
+      "doc": "docs/kn62a.pdf",
+      "text": "Bendix/King KN 62A DME — displays distance, groundspeed and time-to-station for a DME/VOR station."
+    },
+    "adf_kr87": {
+      "match": ["kr87", "adf"],
+      "image": "images/adf.png",
+      "doc": "docs/adf.pdf",
+      "text": "Automatic Direction Finder (ADF) receiver — tunes NDB/beacon stations for bearing information."
+    },
+    "stec_autopilot": {
+      "match": ["stec", "s-tec"],
+      "image": "images/stec.png",
+      "doc": "docs/stec.pdf",
+      "text": "S-TEC autopilot — a rate-based autopilot providing heading and NAV/APR tracking, with altitude hold on so-equipped systems."
+    },
+    "kap140_autopilot": {
+      "match": ["kap140", "kap", "kfc"],
+      "image": "images/kap140.png",
+      "doc": "docs/kap140.pdf",
+      "text": "Bendix/King KAP 140 autopilot — provides heading, NAV/APR and altitude-hold modes."
+    },
+    "autopilot_generic": {
+      "match": ["autopilot"],
+      "image": "images/autopilot.png",
+      "doc": "docs/autopilot.pdf",
+      "text": "Autopilot mode controller — engages heading, NAV/APR and (where fitted) altitude modes via its mode-button row."
+    },
+    "edm_engine_monitor": {
+      "match": ["edm", "enginemonitor", "enginedata"],
+      "image": "images/edm.png",
+      "doc": "docs/edm.pdf",
+      "text": "Engine data monitor — displays per-cylinder EGT/CHT, fuel flow and other engine parameters."
+    }
+  },
+
+  "engine": {
+    "tachometer": {
+      "match": ["tachometer", "tach", "rpm"],
+      "image": "images/tachometer.png",
+      "text": "Displays engine speed in RPM (×100). Coloured arcs mark the normal (green) operating range and limits."
+    },
+    "manifold_pressure": {
+      "match": ["manifoldpressure", "manifold"],
+      "image": "images/manifold_pressure.png",
+      "text": "Engine manifold absolute pressure in inches of mercury (in Hg), used with a constant-speed propeller to set power."
+    },
+    "egt_gauge": {
+      "match": ["egt", "exhaustgas"],
+      "image": "images/egt.png",
+      "text": "Exhaust Gas Temperature — used to set the fuel/air mixture, typically leaning to peak EGT or a set margin rich/lean of peak."
+    },
+    "cht_gauge": {
+      "match": ["cht", "cylinderhead"],
+      "image": "images/cht.png",
+      "text": "Cylinder Head Temperature — monitored to keep the engine within thermal limits."
+    },
+    "oat_gauge": {
+      "match": ["oat", "outsideair"],
+      "image": "images/oat.png",
+      "text": "Outside Air Temperature, in degrees Celsius."
+    },
+    "oil_temperature": {
+      "match": ["oiltemp", "oiltemperature"],
+      "image": "images/oil_temperature.png",
+      "text": "Engine oil temperature — keep within the green operating band."
+    },
+    "oil_pressure": {
+      "match": ["oilpressure", "oilpress"],
+      "image": "images/oil_pressure.png",
+      "text": "Engine oil pressure — must be within limits shortly after start and throughout flight."
+    },
+    "fuel_quantity": {
+      "match": ["fuelquantity", "fuelqty", "fuelgauge"],
+      "image": "images/fuel_quantity.png",
+      "text": "Fuel quantity remaining in the tank(s)."
+    },
+    "fuel_flow": {
+      "match": ["fuelflow", "fuelpressure"],
+      "image": "images/fuel_flow.png",
+      "text": "Fuel flow / fuel pressure to the engine."
+    },
+    "ammeter": {
+      "match": ["ammeter", "voltmeter", "volt"],
+      "image": "images/ammeter.png",
+      "text": "Electrical system ammeter / voltmeter — shows charge/discharge and bus voltage."
+    }
+  },
+
+  "standard": {
+    "cdi_glideslope": {
+      "match": ["cdiwithglideslope", "glideslope", "glidescope"],
+      "image": "images/cdi_glideslope.png",
+      "text": "Course Deviation Indicator with glideslope. The vertical needle shows lateral deviation from the selected course (or localizer) and the horizontal needle shows vertical deviation from the ILS glideslope on an approach."
+    },
+    "hsi": {
+      "match": ["hsi", "horizontalsituation"],
+      "image": "images/hsi.png",
+      "text": "Horizontal Situation Indicator — combines a slaved heading indicator with a course-deviation needle, presenting heading, selected course and lateral deviation in one instrument."
+    },
+    "cdi": {
+      "match": ["cdi", "vorindicator", "vor"],
+      "image": "images/cdi.png",
+      "text": "Course Deviation Indicator / VOR display. Set the desired course with the OBS knob; the needle shows deviation left/right of that course and the TO/FROM flag shows station bearing."
+    },
+    "airspeed_indicator": {
+      "match": ["airspeed"],
+      "image": "images/airspeed_indicator.png",
+      "text": "Indicated airspeed in knots. Coloured arcs mark the operating ranges: white = flap range, green = normal, yellow = caution, and the red line = never-exceed speed (VNE)."
+    },
+    "attitude_indicator": {
+      "match": ["attitude", "artificialhorizon"],
+      "image": "images/attitude_indicator.png",
+      "text": "Shows the aircraft's pitch and bank relative to the horizon (blue sky over brown ground) with a miniature-aircraft reference."
+    },
+    "altimeter": {
+      "match": ["altimeter"],
+      "image": "images/altimeter.png",
+      "text": "Barometric altitude in feet. Set the current altimeter setting (QNH) in the Kollsman window with the adjustment knob."
+    },
+    "turn_coordinator": {
+      "match": ["turncoordinator", "turnandbank", "turnbank"],
+      "image": "images/turn_coordinator.png",
+      "text": "Shows rate of turn and coordination. Aligning the miniature aircraft with the index gives a standard-rate (2-minute) turn; the ball shows whether the turn is coordinated."
+    },
+    "heading_indicator": {
+      "match": ["headingindicator", "directionalgyro", "heading", "dg"],
+      "image": "images/heading_indicator.png",
+      "text": "Gyroscopic directional gyro showing magnetic heading. Realign it with the magnetic compass periodically, as it drifts over time."
+    },
+    "vertical_speed_indicator": {
+      "match": ["verticalspeed", "vsi"],
+      "image": "images/vertical_speed_indicator.png",
+      "text": "Rate of climb or descent in feet per minute. The needle rests at zero (9 o'clock) in level flight."
+    },
+    "magnetic_compass": {
+      "match": ["magneticcompass", "compass"],
+      "image": "images/magnetic_compass.png",
+      "text": "The magnetic ('wet') compass — the primary magnetic direction reference, independent of aircraft electrical power."
+    }
+  }
+}
