@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Map Editor</title>
+<!--
+  panelmap_editor.html — a dependency-free, in-browser editor for areas.json.
+
+  Load a panel image and its areas.json, then:
+    * drag any circle/rect to reposition it (coords update live),
+    * drag a shape's handle to resize it (circle radius / rect corner),
+    * nudge the selected shape with the arrow keys (Shift = x10),
+    * delete a shape (its × button, or the Delete/Backspace key),
+    * Undo (Ctrl/Cmd+Z) steps back through every move/resize/delete,
+    * Revert returns to the originally-loaded areas.json,
+    * Download the edited areas.json (original wrapper + per-area fields kept).
+
+  Runs fully offline — just open the file in a browser (no server needed).
+-->
+<style>
+  :root { --bg:#1e1f24; --panel:#2a2c33; --line:#3a3d46; --fg:#e7e8ea; --muted:#9aa0aa;
+          --accent:#22d36b; --accent2:#39a0ff; --danger:#ff5b5b; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; height:100%; font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+              background:var(--bg); color:var(--fg); }
+  #toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 12px;
+             background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border:1px solid var(--line);
+         background:#343740; color:var(--fg); border-radius:7px; cursor:pointer; font-size:13px; }
+  .btn:hover:not(:disabled) { background:#3d414c; }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn.primary { border-color:#1c7; background:#184e33; }
+  #status { color:var(--muted); margin-left:auto; font-size:12.5px; text-align:right; }
+  #status b { color:var(--fg); }
+  #stage { display:flex; gap:10px; padding:10px; height:calc(100% - 51px); }
+  #canvasWrap { position:relative; flex:1 1 auto; min-width:0; align-self:flex-start;
+                background:#111; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  #panelImg { display:block; width:100%; height:auto; user-select:none; -webkit-user-drag:none; }
+  #overlay { position:absolute; inset:0; width:100%; height:100%; touch-action:none; }
+  #side { width:340px; flex:0 0 340px; display:flex; flex-direction:column; gap:6px; }
+  #side h3 { margin:2px 0; font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.03em; text-transform:uppercase; }
+  #jsonView { flex:1 1 auto; width:100%; resize:none; background:#15161a; color:#cbd3e1;
+              border:1px solid var(--line); border-radius:8px; padding:9px; font:12px/1.45 ui-monospace,Menlo,Consolas,monospace; }
+  .hint { color:var(--muted); font-size:11.5px; }
+  /* SVG shapes */
+  .shape { fill:rgba(34,211,107,.06); stroke:var(--accent); stroke-width:var(--sw,3); cursor:move; }
+  .shape.sel { stroke:var(--accent2); fill:rgba(57,160,255,.12); }
+  .label { fill:var(--accent); font-weight:700; paint-order:stroke; stroke:#000; stroke-width:calc(var(--sw,3)*1.2); stroke-linejoin:round; pointer-events:none; }
+  .label.sel { fill:#cfe5ff; }
+  .handle { fill:#111; stroke:var(--accent2); stroke-width:var(--sw,3); cursor:nwse-resize; }
+  .del { cursor:pointer; }
+  .del circle { fill:var(--danger); }
+  .del text { fill:#fff; font-weight:800; pointer-events:none; }
+  @media (max-width:820px){ #stage{flex-direction:column;height:auto} #side{width:auto;flex:auto;height:40vh} }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <label class="btn">📷 Load image<input type="file" id="imgInput" accept="image/*" hidden></label>
+  <label class="btn">📄 Load areas.json<input type="file" id="jsonInput" accept=".json,application/json" hidden></label>
+  <button class="btn" id="undoBtn" disabled>↶ Undo</button>
+  <button class="btn" id="revertBtn" disabled>⟲ Revert all</button>
+  <button class="btn primary" id="downloadBtn" disabled>⭳ Download areas.json</button>
+  <span id="status">Load a panel image and its <b>areas.json</b> (or drag &amp; drop both here).</span>
+</div>
+<div id="stage">
+  <div id="canvasWrap">
+    <img id="panelImg" alt="">
+    <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <div id="side">
+    <h3>areas.json (live)</h3>
+    <textarea id="jsonView" readonly spellcheck="false"></textarea>
+    <div class="hint">Drag = move · corner handle = resize · arrow keys = nudge (Shift ×10) · ×/Delete = remove · Ctrl/Cmd+Z = undo</div>
+  </div>
+</div>
+<script>
+"use strict";
+const SVGNS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const svg = $("overlay"), img = $("panelImg");
+
+let doc = null;        // full parsed JSON (wrapper + areas)
+let areas = [];        // working array (references into doc.areas)
+let initial = null;    // deep snapshot of areas as loaded
+let undoStack = [];
+let imgW = 0, imgH = 0, imgReady = false, jsonReady = false;
+let selected = null, drag = null;
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const round = n => Math.round(n);
+
+/* ---------- loading ---------- */
+$("imgInput").addEventListener("change", e => { if (e.target.files[0]) loadImage(e.target.files[0]); });
+$("jsonInput").addEventListener("change", e => { if (e.target.files[0]) loadJson(e.target.files[0]); });
+
+function loadImage(file){
+  img.onload = () => { imgW = img.naturalWidth; imgH = img.naturalHeight; imgReady = true; setup(); };
+  img.src = URL.createObjectURL(file);
+}
+function loadJson(file){
+  const r = new FileReader();
+  r.onload = () => {
+    let data; try { data = JSON.parse(r.result); }
+    catch (err) { alert("Could not parse JSON: " + err.message); return; }
+    if (Array.isArray(data)) doc = { areas: data };
+    else if (data && Array.isArray(data.areas)) doc = data;
+    else { alert("areas.json must be an array or an object with an 'areas' key."); return; }
+    areas = doc.areas;
+    initial = clone(areas);
+    undoStack = [];
+    jsonReady = true; selected = null;
+    setup();
+  };
+  r.readAsText(file);
+}
+
+/* ---------- drag & drop whole files onto the page ---------- */
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => {
+  e.preventDefault();
+  for (const f of e.dataTransfer.files) {
+    if (f.type.startsWith("image/")) loadImage(f);
+    else if (f.name.endsWith(".json") || f.type.includes("json")) loadJson(f);
+  }
+});
+
+/* ---------- setup / sizing ---------- */
+function setup(){
+  if (imgReady) {
+    svg.setAttribute("viewBox", `0 0 ${imgW} ${imgH}`);
+    const s = imgW / 500;                       // size UI relative to image resolution
+    svg.style.setProperty("--sw", Math.max(1.5, s).toFixed(2));
+  }
+  const ok = imgReady && jsonReady;
+  $("undoBtn").disabled = !ok || undoStack.length === 0;
+  $("revertBtn").disabled = !ok;
+  $("downloadBtn").disabled = !ok;
+  if (ok) render();
+  status();
+}
+
+/* ---------- geometry helpers ---------- */
+const isCircle = a => a.shape === "circle";
+function bbox(a){
+  const c = a.coords;
+  return isCircle(a) ? {x:c[0]-c[2], y:c[1]-c[2], w:c[2]*2, h:c[2]*2}
+                     : {x:Math.min(c[0],c[2]), y:Math.min(c[1],c[3]),
+                        w:Math.abs(c[2]-c[0]), h:Math.abs(c[3]-c[1])};
+}
+
+/* ---------- render ---------- */
+function render(){
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const fs = Math.max(11, imgW/110), hr = Math.max(5, imgW/170);
+  areas.forEach((a, i) => {
+    const g = document.createElementNS(SVGNS, "g");
+    g.dataset.i = i;
+    const sel = a === selected;
+
+    let shape, hx, hy, lx, ly;
+    if (isCircle(a)) {
+      const [cx, cy, r] = a.coords;
+      shape = el("circle", {cx, cy, r});
+      hx = cx + r*Math.SQRT1_2; hy = cy + r*Math.SQRT1_2;   // handle on the SE rim
+      lx = cx - r; ly = cy - r - fs*0.35;
+    } else {
+      const b = bbox(a);
+      shape = el("rect", {x:b.x, y:b.y, width:b.w, height:b.h});
+      hx = b.x + b.w; hy = b.y + b.h;
+      lx = b.x; ly = b.y - fs*0.35;
+    }
+    shape.setAttribute("class", "shape" + (sel ? " sel" : ""));
+    shape.addEventListener("pointerdown", ev => startDrag(ev, a, "move"));
+    g.appendChild(shape);
+
+    const label = el("text", {x:lx, y:ly, "font-size":fs});
+    label.setAttribute("class", "label" + (sel ? " sel" : ""));
+    label.textContent = a.title || "(untitled)";
+    g.appendChild(label);
+
+    // resize handle
+    const h = el("circle", {cx:hx, cy:hy, r:hr, class:"handle"});
+    h.addEventListener("pointerdown", ev => startDrag(ev, a, "resize"));
+    g.appendChild(h);
+
+    // delete button (top-right of bbox)
+    const b = bbox(a), dx = b.x + b.w, dy = b.y;
+    const del = el("g", {class:"del"});
+    del.appendChild(el("circle", {cx:dx, cy:dy, r:hr}));
+    const x = el("text", {x:dx, y:dy + hr*0.35, "font-size":hr*1.5, "text-anchor":"middle"});
+    x.textContent = "×"; del.appendChild(x);
+    del.addEventListener("pointerdown", ev => { ev.stopPropagation(); ev.preventDefault(); removeArea(a); });
+    g.appendChild(del);
+
+    svg.appendChild(g);
+  });
+  updateJson();
+}
+function el(name, attrs){
+  const e = document.createElementNS(SVGNS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+/* ---------- pointer -> svg coords ---------- */
+function toSVG(ev){
+  const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+  const m = svg.getScreenCTM();
+  const p = pt.matrixTransform(m.inverse());
+  return {x:p.x, y:p.y};
+}
+
+/* ---------- drag / resize ---------- */
+function startDrag(ev, a, mode){
+  ev.preventDefault(); ev.stopPropagation();
+  select(a);
+  pushUndo();                                   // one undo entry per gesture
+  drag = {a, mode, start:toSVG(ev), orig:clone(a.coords)};
+  svg.setPointerCapture(ev.pointerId);
+}
+svg.addEventListener("pointermove", ev => {
+  if (!drag) return;
+  const p = toSVG(ev), dx = p.x - drag.start.x, dy = p.y - drag.start.y, o = drag.orig, a = drag.a;
+  if (drag.mode === "move") {
+    if (isCircle(a)) a.coords = [round(o[0]+dx), round(o[1]+dy), o[2]];
+    else a.coords = [round(o[0]+dx), round(o[1]+dy), round(o[2]+dx), round(o[3]+dy)];
+  } else { // resize
+    if (isCircle(a)) {
+      const r = Math.hypot(p.x - a.coords[0], p.y - a.coords[1]);
+      a.coords = [a.coords[0], a.coords[1], Math.max(3, round(r))];
+    } else {
+      a.coords = [o[0], o[1], Math.max(o[0]+4, round(p.x)), Math.max(o[1]+4, round(p.y))];
+    }
+  }
+  render(); status();
+});
+function endDrag(ev){ if (drag){ try{ svg.releasePointerCapture(ev.pointerId);}catch(_){} drag = null; refreshUndoBtn(); } }
+svg.addEventListener("pointerup", endDrag);
+svg.addEventListener("pointercancel", endDrag);
+
+/* click empty space = deselect */
+svg.addEventListener("pointerdown", () => select(null));
+
+/* ---------- selection / delete / undo ---------- */
+function select(a){ selected = a; render(); status(); }
+function removeArea(a){
+  pushUndo();
+  const i = areas.indexOf(a);
+  if (i >= 0) areas.splice(i, 1);
+  if (selected === a) selected = null;
+  render(); refreshUndoBtn(); status();
+}
+function pushUndo(){ undoStack.push(clone(areas)); if (undoStack.length > 200) undoStack.shift(); refreshUndoBtn(); }
+function undo(){
+  if (!undoStack.length) return;
+  const prev = undoStack.pop();
+  areas.length = 0; prev.forEach(a => areas.push(a)); doc.areas = areas;
+  if (selected && !areas.includes(selected)) selected = null;
+  render(); refreshUndoBtn(); status();
+}
+function revert(){
+  if (!initial) return;
+  pushUndo();
+  areas.length = 0; clone(initial).forEach(a => areas.push(a)); doc.areas = areas;
+  selected = null; render(); refreshUndoBtn(); status();
+}
+function refreshUndoBtn(){ $("undoBtn").disabled = undoStack.length === 0; $("undoBtn").textContent = `↶ Undo (${undoStack.length})`; }
+
+$("undoBtn").addEventListener("click", undo);
+$("revertBtn").addEventListener("click", () => { if (confirm("Discard all edits and return to the loaded areas.json?")) revert(); });
+$("downloadBtn").addEventListener("click", download);
+
+/* ---------- keyboard: nudge / delete / undo ---------- */
+document.addEventListener("keydown", ev => {
+  if (ev.target.tagName === "TEXTAREA") return;
+  if ((ev.ctrlKey||ev.metaKey) && ev.key.toLowerCase() === "z") { ev.preventDefault(); undo(); return; }
+  if (!selected) return;
+  if (ev.key === "Delete" || ev.key === "Backspace") { ev.preventDefault(); removeArea(selected); return; }
+  const step = ev.shiftKey ? 10 : 1;
+  let dx = 0, dy = 0;
+  if (ev.key === "ArrowLeft") dx = -step; else if (ev.key === "ArrowRight") dx = step;
+  else if (ev.key === "ArrowUp") dy = -step; else if (ev.key === "ArrowDown") dy = step; else return;
+  ev.preventDefault();
+  if (!ev.repeat) pushUndo();                   // one undo per key hold, not per repeat
+  const c = selected.coords;
+  if (isCircle(selected)) selected.coords = [c[0]+dx, c[1]+dy, c[2]];
+  else selected.coords = [c[0]+dx, c[1]+dy, c[2]+dx, c[3]+dy];
+  render(); status();
+});
+
+/* ---------- json view + export ---------- */
+function updateJson(){ $("jsonView").value = serialize(); }
+function serialize(){
+  const out = Object.assign({}, doc);
+  out.areas = areas.map(a => {
+    const b = Object.assign({}, a);
+    if (!isCircle(a)) {                          // normalise rect so x1<x2, y1<y2
+      const [a0,a1,a2,a3] = a.coords;
+      b.coords = [Math.min(a0,a2), Math.min(a1,a3), Math.max(a0,a2), Math.max(a1,a3)];
+    }
+    return b;
+  });
+  return JSON.stringify(out, null, 2) + "\n";
+}
+function download(){
+  const blob = new Blob([serialize()], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = (doc.name ? doc.name : "areas") + ".edited.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- status ---------- */
+function status(){
+  const s = $("status");
+  if (!imgReady && !jsonReady) { s.innerHTML = "Load a panel image and its <b>areas.json</b> (or drag &amp; drop both here)."; return; }
+  const parts = [];
+  parts.push(imgReady ? `image <b>${imgW}×${imgH}</b>` : "no image");
+  parts.push(jsonReady ? `<b>${areas.length}</b> areas` : "no areas.json");
+  if (selected) {
+    parts.push(`sel: <b>${selected.title||"(untitled)"}</b> [${selected.coords.join(", ")}]`);
+  }
+  s.innerHTML = parts.join(" · ");
+}
+</script>
+</body>
+</html>
