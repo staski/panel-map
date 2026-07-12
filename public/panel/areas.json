@@ -1,0 +1,22 @@
+{
+  "name": "demo-panel",
+  "image": "images/cockpitPanel.png",
+  "areas": [
+    {
+      "title": "Demo Device 1",
+      "shape": "rect",
+      "coords": [353, 191, 525, 353],
+      "img": "images/demodevice1.png",
+      "doc": "docs/demodevice1.pdf",
+      "text": "Example instrument. This card's picture, text and linked document are all loaded at runtime from the server — edit this file or swap the referenced files under images/ and docs/ to update, no rebuild needed."
+    },
+    {
+      "title": "Demo Device 2",
+      "shape": "rect",
+      "coords": [897, 64, 1193, 206],
+      "img": "images/demodevice2.png",
+      "doc": "docs/demodevice2.pdf",
+      "text": "A second example instrument, also referenced by name. Click to open its manual (docs/demodevice2.pdf)."
+    }
+  ]
+}

@@ -89,14 +89,49 @@ generated Vue inputs never drift apart.
      instrument (slightly conservative/smaller). Prefer this when the initial
      circles are drifted by a large fraction of their radius.
 
-3. **Generate the Vue build inputs:**
+3. **Fill in pictures, texts and docs from the catalog:**
    ```sh
-   node scripts/panelareas_from_json.js --areas areas.json --outdir ./src
+   node scripts/enrich_areas.js --areas areas.json --out panel/areas.json
    ```
-   Emits `panelAreas.js` with `title`/`text` inlined as literals, plus
-   `images.js` / `docs.js` (only when areas reference an `img` / `doc`, since
-   those carry the static imports Vite needs to bundle the assets). Existing
-   files are backed up to `*.ori` first.
+   Matches each area's title against `scripts/instrument_catalog.json`
+   (avionics → engine → standard) and fills `img` / `text` / `doc` with the
+   standard picture, description and documentation for that instrument type, as
+   **server-relative references** (`images/…`, `docs/…`). Only missing fields are
+   filled (custom values are kept; `--overwrite` forces catalog values). It
+   prints the set of referenced image/doc files to place on the server. Edit the
+   catalog to change the standard picture/text/doc for a whole instrument class.
+
+## Deploying: runtime assets (update without rebuilding)
+
+The demo app loads its panel config **and** all assets at runtime, so pictures,
+docs and texts can be swapped on the server with no rebuild.
+
+- Put the enriched config at **`public/panel/areas.json`**, the panel image and
+  instrument pictures under **`public/images/`**, and manuals under
+  **`public/docs/`**. Everything in `public/` is served verbatim and copied into
+  `dist/`.
+- Build once (`npm run build`). `App.vue` fetches `panel/areas.json` at runtime
+  (resolved against `import.meta.env.BASE_URL`, so it works under any deploy
+  path), and references each `img` / `doc` by URL — no build-time bundling.
+- **To update after deployment:** replace a file in `dist/images/` or
+  `dist/docs/`, or edit `dist/panel/areas.json`, directly on the server. The
+  change appears on the next page load; the app is never rebuilt.
+
+The published `@staski/panel-map` component is unchanged — it already accepts
+plain URL strings for `img` / `href`; only the demo *App* changed (fetch vs
+import).
+
+## Legacy: bundling assets at build time
+
+If you prefer a fully self-contained bundle (assets baked into the app):
+
+```sh
+node scripts/panelareas_from_json.js --areas areas.json --outdir ./src
+```
+Emits `panelAreas.js` with `title`/`text` inlined, plus `images.js` / `docs.js`
+carrying the static imports Vite needs to bundle the assets (existing files
+backed up to `*.ori`). Robust and offline, but changing any asset needs a
+rebuild.
 
 ## Two ways to reach `panelAreas.js`
 
