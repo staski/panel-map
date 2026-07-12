@@ -122,7 +122,10 @@ under-count because clusters are dense and yokes hide some. Work systematically:
 - **Nav/Com Radio** — active/standby frequency displays with a flip-flop swap
   knob; e.g. King **KX155**.
 - **GPS Navigator** — a screen with soft-key labels; Garmin **GNS/GTN** or Avidyne
-  **IFD** (the IFD540 shows `AVIDYNE` and `FMS  MAP  AUX` soft-keys).
+  **IFD** (the IFD540 shows `AVIDYNE` and `FMS  MAP  AUX` soft-keys). Note some
+  units are **GPS + COM only, with no NAV/VOR/ILS receiver** — e.g. the Garmin
+  **GNC355** (GPS + COM). It shows a COM frequency but no VLOC/NAV frequency and
+  no VOR/CDI function, unlike a GNS430/530 or GTN650/750 (which include NAV).
 - **Transponder** — 4-digit squawk-code display with `IDENT` and
   `ALT`/`STBY`/`ON`/`GND` mode keys (these are the reliable, model-independent
   cues). **Some models add a quadratic numeric keypad (`0`–`9`) for entering the
@@ -138,7 +141,10 @@ under-count because clusters are dense and yokes hide some. Work systematically:
   `ALT`, `NAV` buttons). The mode-button row is the reliable cue — a lone knob is
   not (see Placement pitfalls).
 - **ADF Receiver** and **DME** — frequency/distance displays; e.g. King **KN62A**
-  DME.
+  DME. The **KN62A** layout specifically: an LED display spanning from the left
+  edge to about the centre, a white 3-way source/mode switch
+  (remote-frequency / groundspeed-time) just left of a **frequency-selector knob
+  on the far right**.
 - **Traffic / awareness display** — a small screen showing nearby traffic
   (FLARM / ADS-B / transponder-based). Frequently an **octagonal** (or square)
   bezel mounted *among the flight instruments* (e.g. right next to the altimeter),
@@ -196,6 +202,11 @@ Things that are commonly boxed by mistake, or boxed in the wrong place:
   breakers, air vents, and the aircraft registration are not instruments.
 - **Empty / plugged instrument holes** (a blank round cutout or a covered hole)
   are not instruments — do not map them.
+- **A round bezel can be a switch, not a gauge.** Backup/standby-power switches
+  for glass displays sit in round holes among the flight instruments — e.g. a
+  **GI-275 backup switch** (engages the GI-275's standby battery if ship power
+  fails). It has a switch/knob and often a small tape, not a dial with a needle;
+  don't call it an ADF/gauge. (Map it as a control only if mapping everything.)
 
 ## Notes for extension
 
