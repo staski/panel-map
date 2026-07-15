@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps instrument types to a standard picture, a standard description text, and (for avionics) a documentation file. Used to auto-fill an areas.json's img/text/doc from each area's title (see scripts/enrich_areas.js and PANELMAP_WORKFLOW.md). Paths are relative to the served app base (BASE_URL), so images/docs live in the server's images/ and docs/ subdirs and can be swapped without rebuilding the app. 'match' holds normalised keywords (lower-case, punctuation/space stripped); the first entry whose keyword is contained in a normalised area title wins, searched avionics -> engine -> standard, most-specific first.",
+  "_comment": "Maps instrument types to a standard picture, a standard description text, and (for avionics) a documentation file. Used to auto-fill an areas.json's img/text/doc from each area's title (see scripts/enrich_areas.js and PANELMAP_WORKFLOW.md). Paths are relative to the served app base (BASE_URL); files live in the instrument DB (default ~/panelMap) under images/ and docs/ and are copied into public/ by scripts/sync_assets.js. 'match' holds normalised keywords (lower-case, punctuation/space stripped); the first entry whose keyword is contained in a normalised area title wins, searched avionics -> engine -> standard, most-specific first. Entries whose files are not yet in the DB are placeholders to add.",
 
   "avionics": {
     "gi275_backup_switch": {
@@ -7,9 +7,15 @@
       "image": "images/gi275_backup_switch.png",
       "text": "Backup / standby-power switch for the GI-275 glass display — engages the display's standby battery if ship power is lost."
     },
+    "garmin_gi275_hsi": {
+      "match": ["gi275hsi"],
+      "image": "images/gi275_hsi.jpg",
+      "doc": "docs/gi275.pdf",
+      "text": "Garmin GI-275 in HSI mode — a round glass display showing heading, selected course and lateral/vertical deviation. Includes a standby battery for continued operation if ship power is lost."
+    },
     "garmin_gi275": {
       "match": ["gi275"],
-      "image": "images/gi275.png",
+      "image": "images/gi275_ai.jpg",
       "doc": "docs/gi275.pdf",
       "text": "Garmin GI-275 electronic flight instrument — a round glass display that can serve as attitude indicator, HSI/CDI, MFD or engine display depending on configuration. Includes a standby battery for continued operation if ship power is lost."
     },
@@ -27,7 +33,7 @@
     },
     "garmin_gns430": {
       "match": ["gns430"],
-      "image": "images/gns430.png",
+      "image": "images/gns430.jpg",
       "doc": "docs/gns430.pdf",
       "text": "Garmin GNS 430 — GPS/NAV/COM navigator with a colour moving-map display, VHF nav/com radio and IFR-approach-capable GPS (smaller-screen sibling of the GNS 530)."
     },
@@ -44,16 +50,28 @@
       "text": "Garmin GTN 650 — touchscreen GPS/NAV/COM navigator with moving map and IFR approaches."
     },
     "garmin_gnc355": {
-      "match": ["gnc355", "gnc"],
+      "match": ["gnc355"],
       "image": "images/gnc355.png",
       "doc": "docs/gnc355.pdf",
       "text": "Garmin GNC 355 — GPS navigator with a VHF COM radio and IFR-approach GPS, but no VHF NAV (VOR/ILS) receiver."
+    },
+    "garmin_gnc255": {
+      "match": ["gnc255"],
+      "image": "images/gnc255.jpg",
+      "doc": "docs/gnc255.pdf",
+      "text": "Garmin GNC 255 — VHF nav/com radio (COM plus VOR/ILS NAV) with active/standby frequencies; no GPS."
     },
     "avidyne_ifd540": {
       "match": ["ifd540"],
       "image": "images/ifd540.png",
       "doc": "docs/ifd540.pdf",
       "text": "Avidyne IFD540 — touchscreen GPS/NAV/COM navigator (FMS/MAP/AUX) with moving map and IFR approaches; a slide-in replacement for the GNS 530."
+    },
+    "bendixking_aeronav900": {
+      "match": ["aeronav900", "aeronav"],
+      "image": "images/aeronav900.jpg",
+      "doc": "docs/aeronav900.pdf",
+      "text": "Bendix/King AeroNav 900 — a Honeywell/Bendix-King-licensed rebrand of the Avidyne IFD540; touchscreen GPS/NAV/COM navigator (FMS/MAP/AUX) with moving map and IFR approaches."
     },
     "avidyne_ifd440": {
       "match": ["ifd440"],
@@ -67,9 +85,15 @@
       "doc": "docs/trx2000.pdf",
       "text": "Garrecht TRX 2000 traffic display — shows nearby traffic (FLARM / ADS-B / transponder-based) as a collision-awareness aid."
     },
+    "airavionics_at1": {
+      "match": ["airavionicsat1", "butterfly", "airavionics"],
+      "image": "images/airavionics_at1.jpg",
+      "doc": "docs/airavionics_at1.pdf",
+      "text": "Air Avionics AT-1 'Butterfly' display — a round glass display for FLARM/ADS-B traffic, variometer and other data (paired with a PowerFLARM sensor)."
+    },
     "garrecht_vt2000": {
       "match": ["vt2000"],
-      "image": "images/vt2000.png",
+      "image": "images/vt2000.jpg",
       "doc": "docs/vt2000.pdf",
       "text": "Garrecht/Air Avionics VT2000 Mode-S transponder with a numeric squawk keypad."
     },
@@ -87,19 +111,36 @@
     },
     "bendixking_kx155": {
       "match": ["kx155", "kx165", "kx"],
-      "image": "images/kx155.png",
+      "image": "images/kx155.jpeg",
       "doc": "docs/kx155.pdf",
       "text": "Bendix/King KX 155 — VHF nav/com radio with active/standby COM and NAV frequencies and a VOR/LOC/glideslope display."
     },
+    "bendixking_kma28": {
+      "match": ["kma28"],
+      "image": "images/kma28.jpg",
+      "doc": "docs/kma28.pdf",
+      "text": "Bendix/King KMA 28 audio panel — selects COM/NAV audio sources, the intercom and the marker-beacon receiver."
+    },
     "bendixking_kma24": {
-      "match": ["kma24", "kma", "audiopanel"],
+      "match": ["kma24", "audiopanel"],
       "image": "images/kma24.png",
       "doc": "docs/kma24.pdf",
       "text": "Bendix/King KMA 24 audio panel — selects COM/NAV audio sources and the marker-beacon receiver (A/O/M)."
     },
+    "garmin_gma345": {
+      "match": ["gma345", "gma"],
+      "image": "images/gma345.jpg",
+      "doc": "docs/gma345.pdf",
+      "text": "Garmin GMA 345 audio panel — Bluetooth-capable audio panel selecting COM/NAV sources, intercom and marker beacon."
+    },
+    "psengineering_spa400": {
+      "match": ["spa400", "spa-400"],
+      "image": "images/spa400.jpeg",
+      "text": "PS Engineering SPA-400 — intercom / audio amplifier (SQ/ON/VOL)."
+    },
     "bendixking_kn62a": {
       "match": ["kn62a", "kn62", "dme"],
-      "image": "images/kn62a.png",
+      "image": "images/kn62a.jpg",
       "doc": "docs/kn62a.pdf",
       "text": "Bendix/King KN 62A DME — displays distance, groundspeed and time-to-station for a DME/VOR station."
     },
@@ -111,13 +152,13 @@
     },
     "stec_autopilot": {
       "match": ["stec", "s-tec"],
-      "image": "images/stec.png",
-      "doc": "docs/stec.pdf",
-      "text": "S-TEC autopilot — a rate-based autopilot providing heading and NAV/APR tracking, with altitude hold on so-equipped systems."
+      "image": "images/stec50.jpeg",
+      "doc": "docs/stec50.pdf",
+      "text": "S-TEC 50 autopilot — a rate-based autopilot providing heading and NAV/APR tracking, with altitude hold on so-equipped systems."
     },
     "kap140_autopilot": {
       "match": ["kap140", "kap", "kfc"],
-      "image": "images/kap140.png",
+      "image": "images/kap140.jpg",
       "doc": "docs/kap140.pdf",
       "text": "Bendix/King KAP 140 autopilot — provides heading, NAV/APR and altitude-hold modes."
     },
@@ -138,7 +179,7 @@
   "engine": {
     "tachometer": {
       "match": ["tachometer", "tach", "rpm"],
-      "image": "images/tachometer.png",
+      "image": "images/tachometer.jpg",
       "text": "Displays engine speed in RPM (×100). Coloured arcs mark the normal (green) operating range and limits."
     },
     "manifold_pressure": {
@@ -191,7 +232,7 @@
   "standard": {
     "cdi_glideslope": {
       "match": ["cdiwithglideslope", "glideslope", "glidescope"],
-      "image": "images/cdi_glideslope.png",
+      "image": "images/cdi_glideslope.jpeg",
       "text": "Course Deviation Indicator with glideslope. The vertical needle shows lateral deviation from the selected course (or localizer) and the horizontal needle shows vertical deviation from the ILS glideslope on an approach."
     },
     "hsi": {
@@ -201,7 +242,7 @@
     },
     "cdi": {
       "match": ["cdi", "vorindicator", "vor"],
-      "image": "images/cdi.png",
+      "image": "images/cdi.jpeg",
       "text": "Course Deviation Indicator / VOR display. Set the desired course with the OBS knob; the needle shows deviation left/right of that course and the TO/FROM flag shows station bearing."
     },
     "airspeed_indicator": {
@@ -221,7 +262,7 @@
     },
     "turn_coordinator": {
       "match": ["turncoordinator", "turnandbank", "turnbank"],
-      "image": "images/turn_coordinator.png",
+      "image": "images/turn_coordinator.jpeg",
       "text": "Shows rate of turn and coordination. Aligning the miniature aircraft with the index gives a standard-rate (2-minute) turn; the ball shows whether the turn is coordinated."
     },
     "heading_indicator": {
@@ -231,7 +272,7 @@
     },
     "vertical_speed_indicator": {
       "match": ["verticalspeed", "vsi"],
-      "image": "images/vertical_speed_indicator.png",
+      "image": "images/vertical_speed_indicator.jpg",
       "text": "Rate of climb or descent in feet per minute. The needle rests at zero (9 o'clock) in level flight."
     },
     "magnetic_compass": {

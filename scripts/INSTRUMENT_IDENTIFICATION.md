@@ -126,6 +126,10 @@ under-count because clusters are dense and yokes hide some. Work systematically:
   units are **GPS + COM only, with no NAV/VOR/ILS receiver** — e.g. the Garmin
   **GNC355** (GPS + COM). It shows a COM frequency but no VLOC/NAV frequency and
   no VOR/CDI function, unlike a GNS430/530 or GTN650/750 (which include NAV).
+  **Check the brand:** the same `FMS/MAP/AUX` unit branded **Bendix/King** (not
+  Avidyne) is a **Bendix/King AeroNav 900** — a Honeywell/Bendix-King-licensed
+  rebrand of the Avidyne IFD540. Label it AeroNav 900 when the bezel reads
+  Bendix/King, IFD540 when it reads Avidyne.
 - **Transponder** — 4-digit squawk-code display with `IDENT` and
   `ALT`/`STBY`/`ON`/`GND` mode keys (these are the reliable, model-independent
   cues). **Some models add a quadratic numeric keypad (`0`–`9`) for entering the
