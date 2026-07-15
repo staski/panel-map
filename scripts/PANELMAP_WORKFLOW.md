@@ -121,33 +121,33 @@ The published `@staski/panel-map` component is unchanged — it already accepts
 plain URL strings for `img` / `href`; only the demo *App* changed (fetch vs
 import).
 
-## Legacy: bundling assets at build time
+## Populating assets from the instrument database
 
-If you prefer a fully self-contained bundle (assets baked into the app):
+`scripts/sync_assets.js` copies the pictures & docs a panel actually references
+out of a **universal instrument database** (a directory of every instrument you
+know, laid out as `<db>/images/…` and `<db>/docs/…`) into `public/`:
 
 ```sh
-node scripts/panelareas_from_json.js --areas areas.json --outdir ./src
+node scripts/sync_assets.js            # db defaults to $PANELMAP_DB or ~/panelMap
+node scripts/sync_assets.js --db /path/to/db --public dist   # e.g. refresh a deployed tree
 ```
-Emits `panelAreas.js` with `title`/`text` inlined, plus `images.js` / `docs.js`
-carrying the static imports Vite needs to bundle the assets (existing files
-backed up to `*.ori`). Robust and offline, but changing any asset needs a
-rebuild.
 
-## Two ways to reach `panelAreas.js`
+It reads `public/panel/areas.json`, copies each referenced `image` / `img` /
+`doc` from the DB into the matching `public/` path, and reports what was copied,
+what was already present, and what's missing from the DB. It also runs as the
+**`postinstall`** step, and exits quietly if the DB or config is absent (so
+`npm install` never fails). To update an instrument's picture or manual for every
+panel that uses it, drop the new file into the DB and re-run.
 
-- **areas.json-first (preferred):** `panelareas_from_json.js` goes straight from
-  the manifest to `panelAreas.js`. Descriptions live in `areas.json`, assets are
-  referenced explicitly, and there is no `texts.js` stub to fill in afterward.
-- **Legacy HTML route:** drop `panelmap.html` into `~/panelMap/` (with `images/`
-  and `docs/`) and run `crtall.js`. This still works, but it re-derives
-  everything from the HTML, matches assets by filename, and stubs `texts.js`.
+> The names a panel references (from `enrich_areas.js` / the catalog) must match
+> the filenames in the DB. Keep `instrument_catalog.json` and the DB in sync.
 
 ## Notes
 
-- Overlay rendering needs Pillow (`pip3 install pillow`). `--dims`,
-  `panelmap.html`, and `panelareas_from_json.js` work with no dependencies.
+- Overlay rendering needs Pillow (`pip3 install pillow`). `--dims` and
+  `panelmap.html` generation work with no dependencies.
 - The `<img src>` / `width` / `height` in `panelmap.html` are only for browser
-  preview; `crtall.js` reads just the `<area>` elements.
-- Both generators validate as they go — bad coord counts, unknown shapes, and
+  preview; consumers read just the `<area>` elements.
+- The tools validate as they go — bad coord counts, unknown shapes, and
   duplicate/colliding titles are reported instead of silently producing a broken
   map.

@@ -9,12 +9,11 @@
     "buildlib": "vite --config vite.config-lib.js build",
     "build": "vite build",
     "preview": "vite preview",
-    "postinstall": "node ./scripts/crtall.js"
+    "postinstall": "node ./scripts/sync_assets.js"
   },
   "dependencies": {
     "@staski/panel-map": "1.0.2",
     "bootstrap": "^5.3.2",
-    "cheerio": "^1.0.0-rc.12",
     "vue": "^3.3.4"
   },
   "devDependencies": {

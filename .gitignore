@@ -6,7 +6,3 @@
 # build output & dependencies
 dist/
 node_modules/
-
-# superseded legacy generators — kept locally, logic now lives in scripts/crtall.js
-scripts/cvt2json.js
-scripts/crtimgsjs.js
