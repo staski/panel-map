@@ -1,0 +1,21 @@
+{
+  "name": "@staski/panel-map",
+  "version": "1.0.3",
+  "license": "MIT",
+  "author": "Carl Philipp Staszkiewicz",
+  "description": "enable popups on highlighted image areas to display information about instruments in an airplane's instrument panel",
+  "keywords": ["vue", "vue3", "cockpit", "instrument-panel", "image-map", "aviation"],
+  "repository": { "type": "git", "url": "git+https://github.com/staski/panel-map.git" },
+  "main": "panel-map.umd.js",
+  "module": "panel-map.es.js",
+  "exports": {
+    ".": {
+      "import": "./panel-map.es.js",
+      "require": "./panel-map.umd.js"
+    },
+    "./style.css": "./style.css"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.4"
+  }
+}

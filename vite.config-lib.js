@@ -8,6 +8,7 @@ const PROJECT_NAME = 'panel-map';
 const MAIN_FILE_PATH = 'src/PanelMap/PanelMap.vue';
 
 export default defineConfig({
+  publicDir: false,            // don't copy the demo app's public/ into the library
   plugins: [
     vue(),
   ],
@@ -17,6 +18,8 @@ export default defineConfig({
     }
   },
   build: {
+    outDir: 'dist-lib',        // library output — separate from the app's dist/
+    emptyOutDir: true,
     lib: {
       entry: path.resolve(__dirname, MAIN_FILE_PATH),
       name: PROJECT_NAME,

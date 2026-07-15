@@ -5,4 +5,5 @@
 
 # build output & dependencies
 dist/
+dist-lib/
 node_modules/
