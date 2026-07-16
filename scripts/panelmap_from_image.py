@@ -14,18 +14,18 @@ It:
   * rounds coords to ints and normalises rect coords to [x1<x2, y1<y2];
   * wraps a bare array, defaults the map `name`, and warns on a missing `image`;
   * preserves every other field (text, img, doc, …);
-  * optionally bounds-checks coords against the image, and can render a
-    verification overlay (`--overlay`) — though the graphical editor
-    (scripts/panelmap_editor.html) is the usual way to view/adjust the map.
+  * bounds-checks coords against the image and, by default, renders a
+    verification overlay PNG (boxes + labels on the photo) so a fresh detection
+    can be eyeballed — skip it with --no-overlay. (The graphical editor,
+    scripts/panelmap_editor.html, is the interactive way to view/adjust a map.)
 
 Usage
 -----
-  # validate + clean in place
-  python3 scripts/panelmap_from_image.py --areas areas.json
+  # validate + clean areas.json in place, and render overlay.png to eyeball it
+  python3 scripts/panelmap_from_image.py --areas areas.json --image panel.jpg
 
-  # write the cleaned copy elsewhere, and also drop a verification overlay
-  python3 scripts/panelmap_from_image.py --areas areas.json --out clean.json \
-      --image panel.jpg --overlay
+  # the image also comes from the areas file's "image" field if present;
+  # --no-overlay skips the overlay, --out writes the cleaned copy elsewhere
 
   # just print the image's pixel dimensions (handy when hand-writing coords)
   python3 scripts/panelmap_from_image.py --image panel.jpg --dims
@@ -210,8 +210,10 @@ def main():
     p.add_argument("--image", help="cockpit photo, for --dims / --overlay / bounds-check "
                                    "(defaults to the areas file's 'image')")
     p.add_argument("--dims", action="store_true", help="print the image's WIDTHxHEIGHT and exit")
-    p.add_argument("--overlay", nargs="?", const="overlay.png", default=None,
-                   help="also render a verification overlay PNG (optional path; default overlay.png)")
+    p.add_argument("--overlay", metavar="PATH",
+                   help="verification overlay PNG path (default: overlay.png next to the output)")
+    p.add_argument("--no-overlay", action="store_true",
+                   help="skip the verification overlay (rendered by default when an image is available)")
     args = p.parse_args()
 
     doc = None
@@ -253,12 +255,14 @@ def main():
         f.write("\n")
     print(f"wrote {out}  ({len(areas)} areas)")
 
-    if args.overlay is not None:
-        if not image or not os.path.isfile(image):
-            print("note: --overlay needs an image (pass --image or set 'image') — skipping.",
-                  file=sys.stderr)
-        elif render_overlay(image, areas, args.overlay):
-            print(f"wrote {args.overlay}")
+    # verification overlay — on by default when an image is available
+    if not args.no_overlay and image and os.path.isfile(image):
+        overlay_path = args.overlay or os.path.join(os.path.dirname(os.path.abspath(out)), "overlay.png")
+        if render_overlay(image, areas, overlay_path):
+            print(f"wrote {overlay_path}")
+    elif args.overlay and (not image or not os.path.isfile(image)):
+        print("note: overlay needs an image (pass --image or set 'image') — skipping.",
+              file=sys.stderr)
 
 
 if __name__ == "__main__":

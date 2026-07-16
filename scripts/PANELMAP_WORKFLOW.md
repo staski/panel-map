@@ -58,32 +58,40 @@ cockpit photo ─▶ vision ─▶ areas.json ─▶ panelmap_from_image.py  (va
 Every tool reads the same `areas.json`, so the map, the preview, and the runtime
 config never drift apart.
 
+> **Required first step:** before the vision pass, **read
+> [`INSTRUMENT_IDENTIFICATION.md`](INSTRUMENT_IDENTIFICATION.md) in full** — its
+> recognition cues, the titling rule (function vs model), shape disambiguation,
+> the completeness checklist, and the placement/mislabel pitfalls. Detection
+> quality depends on it; consult it without being prompted to.
+
 ## Steps
 
-1. **Detect instruments → `areas.json`.** Have Claude look at the photo and emit
-   the manifest above, using `INSTRUMENT_IDENTIFICATION.md` to recognize and
-   label instruments (shape rules, common-instrument cues, and the *completeness*
-   checklist for finding every round gauge). **Zoom in** — crop each instrument
-   cluster and magnify it (e.g. 3–4×) before finalizing; it reveals gauges the
-   full-frame view misses (partial/occluded ones) and gives noticeably better
-   centers and radii, so the seeds often need no geometric refine at all. (Need
-   the pixel size while checking coords?
+1. **Read the reference, then detect → `areas.json`.** First read
+   `INSTRUMENT_IDENTIFICATION.md` in full (required — see the callout above); it
+   is an input to this step, not optional background. Then look at the photo and
+   emit the manifest above, applying its recognition cues, titling rule, shape
+   rules and *completeness* checklist (find every round gauge). **Zoom in** —
+   crop each instrument cluster and magnify it (e.g. 3–4×) before finalizing; it
+   reveals gauges the full-frame view misses (partial/occluded ones) and gives
+   noticeably better centers and radii, so the seeds often need no geometric
+   refine at all. (Need the pixel size while checking coords?
    `python3 scripts/panelmap_from_image.py --image panel.jpg --dims`.)
 
-2. **Validate & clean:**
+2. **Validate, clean & eyeball:**
    ```sh
-   python3 scripts/panelmap_from_image.py --areas areas.json
-   # validates the schema and rewrites areas.json cleaned: rounds coords,
-   # normalises rect corners to [x1<x2,y1<y2], defaults name, and fills a
-   # missing title from id/name/label (with a warning). --out writes elsewhere.
+   python3 scripts/panelmap_from_image.py --areas areas.json --image panel.jpg
+   # validates the schema and rewrites areas.json cleaned (rounds coords,
+   # normalises rect corners to [x1<x2,y1<y2], defaults name, fills a missing
+   # title from id/name/label), and renders overlay.png so the detection can be
+   # eyeballed. --no-overlay skips the overlay; --out writes the cleaned copy elsewhere.
    ```
-   This is the schema gate — it fails loudly on a broken map and warns on
-   recoverable issues (and, with an image available, flags coords outside it).
-   **View and fine-tune the map in the editor** (`scripts/panelmap_editor.html`):
-   load the photo + `areas.json`, drag/resize/delete shapes, then download the
-   updated `areas.json`. Geometry is usually close; instrument *labels* often need
-   a human (a G5 vs a GI-275, a faded radio's model number). *(Prefer a static
-   overlay image instead of the editor? add `--overlay --image panel.jpg`.)*
+   This is the schema gate — it fails loudly on a broken map, warns on
+   recoverable issues, and flags coords outside the image. **Look at `overlay.png`
+   to check the first shot** (the vision pass should do this to self-verify), then
+   fine-tune: edit `areas.json` and re-run, or use the graphical editor
+   (`scripts/panelmap_editor.html`) to drag/resize/delete shapes and download the
+   result. Geometry is usually close; instrument *labels* often need a human (a G5
+   vs a GI-275, a faded radio's model number).
 
    **Optional — snap circles to their bezels:** hand-estimated circle centers
    and radii drift by a few pixels. `panelmap_refine.py` uses the dark-bezel /
