@@ -24,8 +24,42 @@ Detecting a panel has two parts with very different reliability:
   panel, or two areas landing on the same spot, are red flags — and a misplaced
   box usually means the *real* instrument got missed too.
 
-Always generate the `overlay.png` and have a human eyeball it before the map is
-used downstream.
+Always eyeball the map — in the editor (`panelmap_editor.html`), or from an
+`--overlay` render — before it is used downstream.
+
+## Titling rule: read, don't guess — function over model
+
+`title` is the catalog-matching key, so a wrong model name is worse than a
+generic one. Apply this two-tier rule:
+
+**Faceplate-named units → brand/model title.** Radios, navigators,
+transponders, audio panels and similar avionics carry their model name printed
+on the bezel ("GNS 430", "KX 155 TSO", "TT31", "KMA 24"). Here the title is
+*read* from the photo, not inferred — use it verbatim.
+
+**Indicator-class instruments → functional title.** Mechanical CDIs, HSIs,
+RMIs and ADF indicators from different makers (Garmin GI-106A, King KI
+203/204/206/525, …) are near-indistinguishable at panel-photo resolution, and
+model guesses are the most common vision-pass error. Title them by function
+instead:
+
+- `CDI` — vertical needle, OBS knob, TO/FR flag, **no** glideslope needle
+- `CDI/Glideslope` — as above **plus** a horizontal GS needle / GS flags
+- `HSI` — course needle integrated with a heading compass card
+- `ADF Indicator` — plain pointer on a card, **no** TO/FR flag and no
+  deviation dots
+
+The glideslope needle, TO/FR flag and compass-card integration are reliably
+visible in a zoomed crop; the manufacturer logo often is not. If a model can
+be read or is otherwise known, put it in the optional `text` field
+("Garmin GI-106A") — there a wrong guess breaks nothing downstream.
+
+**Autopilots:** don't infer the model from capabilities alone; use the
+control-head form factor first. An S-TEC with no standalone head (controls in
+the turn coordinator) is a System 20/30; a separate rectangular programmer
+with mode annunciator window, HDG/NAV/APR/REV and trim UP/DN is a System
+40/50 (ALT hold ⇒ 50). When unsure, `S-TEC Autopilot` alone still matches the
+catalog — prefer that over a specific wrong number.
 
 ## Shape-based disambiguation rules
 
