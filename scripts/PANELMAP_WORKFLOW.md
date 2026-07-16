@@ -1,9 +1,9 @@
 # Building a panel map from a cockpit photo
 
-The tedious part of creating a new virtual panel used to be authoring
-`panelmap.html` — measuring every instrument's pixel box by hand and then
-hand-filling descriptions. This workflow replaces that with a single canonical
-source, **`areas.json`**, produced by a vision pass and consumed by two tools.
+The tedious part of creating a new virtual panel used to be measuring every
+instrument's pixel box by hand and hand-filling descriptions. This workflow
+replaces that with a single canonical source, **`areas.json`**, produced by a
+vision pass and consumed by a small toolchain.
 
 ## `areas.json` — the source of truth (OUTPUT CONTRACT)
 
@@ -41,16 +41,16 @@ Contract, most important first:
 - Top-level **`image`** is the panel background photo (required for the runtime
   app); `name` is optional. `text` / `img` / `doc` are optional — `enrich_areas.js`
   fills them from the catalog.
-- **Validate before continuing:** always render the overlay with
-  `panelmap_from_image.py` (below). It rejects a missing `title` or malformed
-  `coords`, so it catches schema slips immediately — don't hand-roll the overlay,
-  use the tool so the schema is checked.
+- **Validate before continuing:** always run `panelmap_from_image.py` (below) on
+  the areas.json. It checks the schema — a missing `title`, wrong `shape`, or
+  malformed `coords` — and writes back a cleaned copy, catching slips immediately.
 
 ## The pipeline
 
 ```
-cockpit photo ─▶ vision ─▶ areas.json ─▶ panelmap_from_image.py  (overlay.png — verify + validates schema)
-                (Claude)       │
+cockpit photo ─▶ vision ─▶ areas.json ─▶ panelmap_from_image.py  (validate + clean areas.json)
+                (Claude)       │              │
+                               │              └─▶ view / fine-tune in panelmap_editor.html
                                └────────▶ enrich_areas.js ─▶ public/panel/areas.json ─▶ sync_assets.js
                                           (fills img/text/doc from the catalog)         (pull pics/docs from the DB)
 ```
@@ -70,17 +70,20 @@ config never drift apart.
    the pixel size while checking coords?
    `python3 scripts/panelmap_from_image.py --image panel.jpg --dims`.)
 
-2. **Preview & verify:**
+2. **Validate & clean:**
    ```sh
-   python3 scripts/panelmap_from_image.py --areas areas.json --outdir ./out
-   # wrote ./out/panelmap.html  (N areas, image WxH)
-   # wrote ./out/overlay.png
+   python3 scripts/panelmap_from_image.py --areas areas.json
+   # validates the schema and rewrites areas.json cleaned: rounds coords,
+   # normalises rect corners to [x1<x2,y1<y2], defaults name, and fills a
+   # missing title from id/name/label (with a warning). --out writes elsewhere.
    ```
-   `overlay.png` draws every box + label on the photo. Geometry is usually
-   close; instrument *labels* often need a human (the model can't always tell a
-   G5 from a GI-275, or read a faded radio's model number). Edit `areas.json`
-   and re-run. The image comes from the manifest's `image` field, or pass
-   `--image` to override.
+   This is the schema gate — it fails loudly on a broken map and warns on
+   recoverable issues (and, with an image available, flags coords outside it).
+   **View and fine-tune the map in the editor** (`scripts/panelmap_editor.html`):
+   load the photo + `areas.json`, drag/resize/delete shapes, then download the
+   updated `areas.json`. Geometry is usually close; instrument *labels* often need
+   a human (a G5 vs a GI-275, a faded radio's model number). *(Prefer a static
+   overlay image instead of the editor? add `--overlay --image panel.jpg`.)*
 
    **Optional — snap circles to their bezels:** hand-estimated circle centers
    and radii drift by a few pixels. `panelmap_refine.py` uses the dark-bezel /
@@ -156,10 +159,8 @@ panel that uses it, drop the new file into the DB and re-run.
 
 ## Notes
 
-- Overlay rendering needs Pillow (`pip3 install pillow`). `--dims` and
-  `panelmap.html` generation work with no dependencies.
-- The `<img src>` / `width` / `height` in `panelmap.html` are only for browser
-  preview; consumers read just the `<area>` elements.
+- Validation, cleaning, and `--dims` work with no dependencies; only the optional
+  `--overlay` PNG needs Pillow (`pip3 install pillow`).
 - The tools validate as they go — bad coord counts, unknown shapes, and
   duplicate/colliding titles are reported instead of silently producing a broken
   map.
