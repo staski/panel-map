@@ -106,15 +106,24 @@ def load_areas(path):
 
 def validate(areas):
     """Return a cleaned list; raise on structural problems so a bad map never
-    silently flows into crtall.js."""
+    silently flows downstream. Tolerates a slightly-off schema: an area missing
+    'title' falls back to label/name/id (with a warning) rather than failing."""
     cleaned = []
     seen = set()
+    fell_back = 0
     for i, a in enumerate(areas):
-        title = str(a.get("title", "")).strip()
+        title = a.get("title")
+        if title is None or str(title).strip() == "":
+            for alt in ("label", "name", "id"):     # tolerate common variations
+                if a.get(alt) not in (None, ""):
+                    title = a.get(alt)
+                    fell_back += 1
+                    break
+        title = str(title or "").strip()
         shape = str(a.get("shape", "")).strip().lower()
         coords = a.get("coords", [])
         if not title:
-            die(f"area #{i} has no title")
+            die(f"area #{i} has no usable label (need 'title', or a text id/name/label)")
         if shape not in ("rect", "circle"):
             die(f"area '{title}': shape must be 'rect' or 'circle', got '{shape}'")
         if not all(isinstance(c, (int, float)) for c in coords):
@@ -124,11 +133,15 @@ def validate(areas):
             die(f"area '{title}': {shape} needs {need} coords, got {len(coords)}")
         key = title.lower()
         if key in seen:
-            print(f"warning: duplicate title '{title}' — crtall.js keys by title, "
-                  f"so this will collide", file=sys.stderr)
+            print(f"warning: duplicate title '{title}' — the toolchain keys on "
+                  f"title, so this will collide", file=sys.stderr)
         seen.add(key)
         cleaned.append({"title": title, "shape": shape,
                         "coords": [int(round(c)) for c in coords]})
+    if fell_back:
+        print(f"warning: {fell_back} area(s) had no 'title' — used label/name/id "
+              f"instead. Give each area a proper 'title' (the toolchain keys on it).",
+              file=sys.stderr)
     return cleaned
 
 

@@ -70,11 +70,24 @@ function main(){
   if (!fs.existsSync(args.areas)) die('areas file not found: ' + args.areas);
   if (!fs.existsSync(args.catalog)) die('catalog not found: ' + args.catalog);
 
-  const doc = JSON.parse(fs.readFileSync(args.areas, 'utf-8'));
-  const areas = Array.isArray(doc) ? doc : doc.areas;
+  const raw = JSON.parse(fs.readFileSync(args.areas, 'utf-8'));
+  const doc = Array.isArray(raw) ? { areas: raw } : raw;   // normalise to { name, image, areas }
+  const areas = doc.areas;
   if (!Array.isArray(areas)) die("areas file must be an array or have an 'areas' key");
+  if (!doc.name) doc.name = 'panel';
   const cat = JSON.parse(fs.readFileSync(args.catalog, 'utf-8'));
   const ordered = catalogOrder(cat);
+
+  // Tolerate a slightly-off schema: fill a missing 'title' from label/name/id.
+  let fellBack = 0;
+  for (const a of areas) {
+    if (a.title == null || String(a.title).trim() === '') {
+      const alt = [a.label, a.name, a.id].find(v => v != null && v !== '');
+      if (alt != null) { a.title = String(alt); fellBack++; }
+    }
+  }
+  if (fellBack) console.error(`note: ${fellBack} area(s) had no 'title' — used ` +
+    `label/name/id instead; the toolchain keys on 'title'.`);
 
   const setIf = (a, field, val) => {
     if (val === undefined) return;
@@ -93,6 +106,9 @@ function main(){
     if (a.img) images.add(a.img);
     if (a.doc) docs.add(a.doc);
   }
+
+  if (!doc.image) console.error("note: no top-level 'image' — set it to the panel " +
+    "photo (e.g. images/panel.jpg) so the runtime app can display the panel.");
 
   const out = args.out || args.areas.replace(/\.json$/, '') + '.enriched.json';
   fs.writeFileSync(out, JSON.stringify(doc, null, 2) + '\n');

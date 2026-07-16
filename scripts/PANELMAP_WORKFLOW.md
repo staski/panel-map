@@ -5,46 +5,58 @@ The tedious part of creating a new virtual panel used to be authoring
 hand-filling descriptions. This workflow replaces that with a single canonical
 source, **`areas.json`**, produced by a vision pass and consumed by two tools.
 
-## `areas.json` is the source of truth
+## `areas.json` — the source of truth (OUTPUT CONTRACT)
 
-One hand-editable file describes the whole panel — geometry, labels,
-descriptions, and asset references:
+The vision pass MUST emit `areas.json` in exactly this shape — the whole
+toolchain keys on it:
 
 ```json
 {
-  "name": "panel",
-  "image": "cockpitPanel.png",
+  "name": "panel",                     // optional (defaults to "panel")
+  "image": "images/cockpitPanel.png",  // panel background photo (required for the runtime app)
   "areas": [
     {
-      "title": "Airspeed Indicator",
-      "shape": "circle",
-      "coords": [232, 100, 60],
-      "text": "Shows indicated airspeed in knots.",
-      "img":  "asi.png",
-      "doc":  "asi.pdf"
+      "title": "Airspeed Indicator",    // REQUIRED — the human instrument name
+      "shape": "circle",                // REQUIRED — "circle" | "rect"
+      "coords": [232, 100, 60],         // REQUIRED — circle [cx,cy,r], rect [x1,y1,x2,y2]
+      "text": "Shows indicated airspeed in knots.",  // optional
+      "img":  "images/asi.png",         // optional (popup picture)
+      "doc":  "docs/asi.pdf"            // optional (manual opened on click)
     },
     { "title": "Avidyne IFD540", "shape": "rect", "coords": [893, 63, 1197, 202] }
   ]
 }
 ```
 
-- `title`, `shape` (`rect` | `circle`), `coords` are required per area.
-- `coords`: `circle` = `[cx, cy, r]`, `rect` = `[x1, y1, x2, y2]`, in the image's
-  natural pixel space.
-- `text`, `img`, `doc` are optional (description shown in the popup, popup image,
-  and manual PDF opened on click).
-- Top-level `image` names the panel background photo.
+Contract, most important first:
+
+- **Every area MUST have a `title`** — the human instrument name ("Altimeter",
+  "Garmin GNS430", …). It is the key the entire chain uses: catalog matching,
+  the popup heading, and the `<area>` label. **Do NOT label areas with an
+  `id`/number, and never omit `title`** — a missing title breaks enrichment and
+  generation. (An `id` field, if present, is ignored.)
+- `shape` (`rect` | `circle`) and `coords` are required. `coords` are in the
+  image's **natural pixel space**: `circle` = `[cx, cy, r]`, `rect` =
+  `[x1, y1, x2, y2]`.
+- Top-level **`image`** is the panel background photo (required for the runtime
+  app); `name` is optional. `text` / `img` / `doc` are optional — `enrich_areas.js`
+  fills them from the catalog.
+- **Validate before continuing:** always render the overlay with
+  `panelmap_from_image.py` (below). It rejects a missing `title` or malformed
+  `coords`, so it catches schema slips immediately — don't hand-roll the overlay,
+  use the tool so the schema is checked.
 
 ## The pipeline
 
 ```
-                                    ┌─▶ panelmap_from_image.py ─▶ panelmap.html + overlay.png   (preview / verify)
-cockpit photo ─▶ vision ─▶ areas.json ┤
-                (Claude)             └─▶ panelareas_from_json.js ─▶ panelAreas.js (+ images.js / docs.js)   (build inputs)
+cockpit photo ─▶ vision ─▶ areas.json ─▶ panelmap_from_image.py  (overlay.png — verify + validates schema)
+                (Claude)       │
+                               └────────▶ enrich_areas.js ─▶ public/panel/areas.json ─▶ sync_assets.js
+                                          (fills img/text/doc from the catalog)         (pull pics/docs from the DB)
 ```
 
-Both tools read the same `areas.json`, so the map, the preview, and the
-generated Vue inputs never drift apart.
+Every tool reads the same `areas.json`, so the map, the preview, and the runtime
+config never drift apart.
 
 ## Steps
 
