@@ -144,6 +144,21 @@ The published `@staski/panel-map` component is unchanged — it already accepts
 plain URL strings for `img` / `href`; only the demo *App* changed (fetch vs
 import).
 
+### Shrinking the panel image for the web
+
+Identify on a high-res photo (better recognition), but serve a smaller one
+(≈1–2 MB). The `areas.json` coords are in the *served* image's pixel space, so
+the image and the coords must shrink **together** — `scale_panel.py` does both:
+
+```sh
+python3 scripts/scale_panel.py --image panel.jpg --areas areas.json --max-mb 1.5
+# scales the image + every coordinate by the same factor; writes panel_web.jpg +
+# areas_web.json (coords scaled, 'image' field updated). Targets: --max-mb / --max-dim / --scale.
+```
+
+Use the scaled `*_web.jpg` as your `public/images/` panel image and the scaled
+`areas_web.json` as `public/panel/areas.json`. (Requires Pillow.)
+
 ## Populating assets from the instrument database
 
 `scripts/sync_assets.js` copies the pictures & docs a panel actually references
