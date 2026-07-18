@@ -10,6 +10,7 @@
   Load a panel image and its areas.json, then:
     * drag any circle/rect to reposition it (coords update live),
     * drag a shape's handle to resize it (circle radius / rect corner),
+    * edit a shape's title in the side field (or double-click the shape),
     * nudge the selected shape with the arrow keys (Shift = x10),
     * delete a shape (its × button, or the Delete/Backspace key),
     * Undo (Ctrl/Cmd+Z) steps back through every move/resize/delete,
@@ -42,6 +43,10 @@
   #side h3 { margin:2px 0; font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.03em; text-transform:uppercase; }
   #jsonView { flex:1 1 auto; width:100%; resize:none; background:#15161a; color:#cbd3e1;
               border:1px solid var(--line); border-radius:8px; padding:9px; font:12px/1.45 ui-monospace,Menlo,Consolas,monospace; }
+  #titleInput { width:100%; background:#15161a; color:var(--fg); border:1px solid var(--line);
+                border-radius:8px; padding:8px 10px; font-size:13px; }
+  #titleInput:disabled { opacity:.45; }
+  #titleInput:focus { outline:none; border-color:var(--accent2); }
   .hint { color:var(--muted); font-size:11.5px; }
   /* SVG shapes */
   .shape { fill:rgba(34,211,107,.06); stroke:var(--accent); stroke-width:var(--sw,3); cursor:move; }
@@ -70,16 +75,18 @@
     <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
   <div id="side">
+    <h3>Selected shape — title</h3>
+    <input id="titleInput" type="text" placeholder="select a shape to edit its title…" disabled autocomplete="off" spellcheck="false">
     <h3>areas.json (live)</h3>
     <textarea id="jsonView" readonly spellcheck="false"></textarea>
-    <div class="hint">Drag = move · corner handle = resize · arrow keys = nudge (Shift ×10) · ×/Delete = remove · Ctrl/Cmd+Z = undo</div>
+    <div class="hint">Drag = move · corner handle = resize · dbl-click / edit the field = rename · arrow keys = nudge (Shift ×10) · ×/Delete = remove · Ctrl/Cmd+Z = undo</div>
   </div>
 </div>
 <script>
 "use strict";
 const SVGNS = "http://www.w3.org/2000/svg";
 const $ = id => document.getElementById(id);
-const svg = $("overlay"), img = $("panelImg");
+const svg = $("overlay"), img = $("panelImg"), titleInput = $("titleInput");
 
 let doc = null;        // full parsed JSON (wrapper + areas)
 let areas = [];        // working array (references into doc.areas)
@@ -173,6 +180,9 @@ function render(){
     }
     shape.setAttribute("class", "shape" + (sel ? " sel" : ""));
     shape.addEventListener("pointerdown", ev => startDrag(ev, a, "move"));
+    shape.addEventListener("dblclick", ev => {   // quick rename
+      ev.preventDefault(); select(a); titleInput.focus(); titleInput.select();
+    });
     g.appendChild(shape);
 
     const label = el("text", {x:lx, y:ly, "font-size":fs});
@@ -244,7 +254,25 @@ svg.addEventListener("pointercancel", endDrag);
 svg.addEventListener("pointerdown", () => select(null));
 
 /* ---------- selection / delete / undo ---------- */
-function select(a){ selected = a; render(); status(); }
+function select(a){
+  selected = a;
+  titleInput.value = a ? (a.title || "") : "";
+  titleInput.disabled = !a;
+  render(); status();
+}
+
+/* ---------- title editing ---------- */
+let titlePushed = false;
+titleInput.addEventListener("focus", () => { titlePushed = false; });
+titleInput.addEventListener("input", () => {
+  if (!selected) return;
+  if (!titlePushed) { pushUndo(); titlePushed = true; }   // one undo entry per edit burst
+  selected.title = titleInput.value;
+  render(); status();
+});
+titleInput.addEventListener("keydown", ev => {
+  if (ev.key === "Enter" || ev.key === "Escape") titleInput.blur();
+});
 function removeArea(a){
   pushUndo();
   const i = areas.indexOf(a);
@@ -274,7 +302,7 @@ $("downloadBtn").addEventListener("click", download);
 
 /* ---------- keyboard: nudge / delete / undo ---------- */
 document.addEventListener("keydown", ev => {
-  if (ev.target.tagName === "TEXTAREA") return;
+  if (ev.target.tagName === "TEXTAREA" || ev.target.tagName === "INPUT") return;
   if ((ev.ctrlKey||ev.metaKey) && ev.key.toLowerCase() === "z") { ev.preventDefault(); undo(); return; }
   if (!selected) return;
   if (ev.key === "Delete" || ev.key === "Backspace") { ev.preventDefault(); removeArea(selected); return; }
