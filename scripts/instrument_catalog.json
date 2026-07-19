@@ -184,12 +184,12 @@
     },
     "manifold_pressure": {
       "match": ["manifoldpressure", "manifold"],
-      "image": "images/manifold_pressure.png",
+      "image": "images/manifold_pressure.jpeg",
       "text": "Engine manifold absolute pressure in inches of mercury (in Hg), used with a constant-speed propeller to set power."
     },
     "egt_gauge": {
       "match": ["egt", "exhaustgas"],
-      "image": "images/egt.png",
+      "image": "images/egt.jpeg",
       "text": "Exhaust Gas Temperature — used to set the fuel/air mixture, typically leaning to peak EGT or a set margin rich/lean of peak."
     },
     "cht_gauge": {
@@ -224,7 +224,7 @@
     },
     "ammeter": {
       "match": ["ammeter", "voltmeter", "volt"],
-      "image": "images/ammeter.png",
+      "image": "images/ammeter.jpeg",
       "text": "Electrical system ammeter / voltmeter — shows charge/discharge and bus voltage."
     }
   },
@@ -252,7 +252,7 @@
     },
     "attitude_indicator": {
       "match": ["attitude", "artificialhorizon"],
-      "image": "images/attitude_indicator.png",
+      "image": "images/attitude_indicator.jpeg",
       "text": "Shows the aircraft's pitch and bank relative to the horizon (blue sky over brown ground) with a miniature-aircraft reference."
     },
     "altimeter": {
@@ -267,7 +267,7 @@
     },
     "heading_indicator": {
       "match": ["headingindicator", "directionalgyro", "heading", "dg"],
-      "image": "images/heading_indicator.png",
+      "image": "images/heading_indicator.jpg",
       "text": "Gyroscopic directional gyro showing magnetic heading. Realign it with the magnetic compass periodically, as it drifts over time."
     },
     "vertical_speed_indicator": {
@@ -277,7 +277,7 @@
     },
     "magnetic_compass": {
       "match": ["magneticcompass", "compass"],
-      "image": "images/magnetic_compass.png",
+      "image": "images/magnetic_compass.jpeg",
       "text": "The magnetic ('wet') compass — the primary magnetic direction reference, independent of aircraft electrical power."
     }
   }
