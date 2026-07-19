@@ -124,6 +124,28 @@ config never drift apart.
    prints the set of referenced image/doc files to place on the server. Edit the
    catalog to change the standard picture/text/doc for a whole instrument class.
 
+## Automated build (`build_panel.sh`)
+
+Once the vision pass has produced `areas.json`, one command runs the whole
+pipeline — the only manual step is editing the map in the browser:
+
+```sh
+scripts/build_panel.sh --image cockpit.jpg --areas areas.json --name mypanel --max-mb 1.5
+```
+
+It: validates/cleans `areas.json`; serves the editor **pre-loaded** with the
+image + map (`edit_server.py`) and waits for you to press **Save**; web-scales
+the image + coords (`scale_panel.py`); enriches from the catalog; syncs the
+referenced instrument pictures/docs from the DB; runs `npm run build`; and
+packages **`dist.zip`** (ready for `put.sh` / `update.sh`). Flags: `--no-edit`,
+`--clean` (lean dist — wipes stale `public/images`+`docs` first), `--db DIR`,
+`--mode published`, `--no-open`.
+
+> **Size heads-up:** `dist.zip` bundles the referenced instrument **manuals**,
+> which can be large (a full GNS430 / GI-275 / GNC355 pilot guide is 10–25 MB
+> each). Use `--clean` to drop stale assets; keep only the docs you need in the
+> DB, or link big manuals externally, for a lean deploy.
+
 ## Deploying: runtime assets (update without rebuilding)
 
 The demo app loads its panel config **and** all assets at runtime, so pictures,

@@ -18,6 +18,8 @@
     * Download the edited areas.json (original wrapper + per-area fields kept).
 
   Runs fully offline — just open the file in a browser (no server needed).
+  When served by edit_server.py (the automated pipeline), it also auto-loads the
+  image + areas.json and a "Save & continue build" button posts them back.
 -->
 <style>
   :root { --bg:#1e1f24; --panel:#2a2c33; --line:#3a3d46; --fg:#e7e8ea; --muted:#9aa0aa;
@@ -67,6 +69,7 @@
   <button class="btn" id="undoBtn" disabled>↶ Undo</button>
   <button class="btn" id="revertBtn" disabled>⟲ Revert all</button>
   <button class="btn primary" id="downloadBtn" disabled>⭳ Download areas.json</button>
+  <button class="btn primary" id="saveBtn" style="display:none">💾 Save &amp; continue build</button>
   <span id="status">Load a panel image and its <b>areas.json</b> (or drag &amp; drop both here).</span>
 </div>
 <div id="stage">
@@ -102,26 +105,57 @@ const round = n => Math.round(n);
 $("imgInput").addEventListener("change", e => { if (e.target.files[0]) loadImage(e.target.files[0]); });
 $("jsonInput").addEventListener("change", e => { if (e.target.files[0]) loadJson(e.target.files[0]); });
 
-function loadImage(file){
+function setImageSrc(src){
   img.onload = () => { imgW = img.naturalWidth; imgH = img.naturalHeight; imgReady = true; setup(); };
-  img.src = URL.createObjectURL(file);
+  img.src = src;
+}
+function loadImage(file){ setImageSrc(URL.createObjectURL(file)); }
+
+function loadJsonData(data){
+  if (Array.isArray(data)) doc = { areas: data };
+  else if (data && Array.isArray(data.areas)) doc = data;
+  else { alert("areas.json must be an array or an object with an 'areas' key."); return false; }
+  areas = doc.areas; initial = clone(areas); undoStack = []; jsonReady = true; selected = null;
+  setup(); return true;
 }
 function loadJson(file){
   const r = new FileReader();
   r.onload = () => {
     let data; try { data = JSON.parse(r.result); }
     catch (err) { alert("Could not parse JSON: " + err.message); return; }
-    if (Array.isArray(data)) doc = { areas: data };
-    else if (data && Array.isArray(data.areas)) doc = data;
-    else { alert("areas.json must be an array or an object with an 'areas' key."); return; }
-    areas = doc.areas;
-    initial = clone(areas);
-    undoStack = [];
-    jsonReady = true; selected = null;
-    setup();
+    loadJsonData(data);
   };
   r.readAsText(file);
 }
+
+/* ---------- session mode (served by edit_server.py) ---------- */
+let saveUrl = null;
+(async function initSession(){
+  let sess;
+  try {
+    const res = await fetch("session.json", { cache: "no-store" });
+    if (!res.ok) return;                     // standalone: manual load
+    sess = await res.json();
+  } catch (e) { return; }                    // file:// or no server: manual load
+  saveUrl = sess.save || "/save";
+  $("saveBtn").style.display = "";
+  setImageSrc(sess.image);
+  try {
+    const r = await fetch(sess.areas, { cache: "no-store" });
+    loadJsonData(await r.json());
+  } catch (e) { alert("Could not load session areas.json: " + e.message); }
+})();
+
+$("saveBtn").addEventListener("click", async () => {
+  if (!saveUrl) return;
+  try {
+    const res = await fetch(saveUrl, { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: serialize() });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const b = $("saveBtn"); b.textContent = "✓ Saved — build continuing"; b.disabled = true;
+    $("status").innerHTML = "<b>Saved.</b> You can close this tab — the build is continuing.";
+  } catch (e) { alert("Save failed: " + e.message); }
+});
 
 /* ---------- drag & drop whole files onto the page ---------- */
 document.addEventListener("dragover", e => e.preventDefault());
