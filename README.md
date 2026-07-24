@@ -1,114 +1,207 @@
 # panel-map
 
-A simple Vue component that enbables popups over highlighted areas of an image map. The popup will appear on the rightmost column of the screen. Main pupose is for displaying a virtual airplane instrument panel and provide information about the instruments once you hover over them on the image. The component is reactive in the sense that it resizes the main picture when resizing the screen. Please note however, that this component will not produce meaningful results on mobile devies (phones or tablets)
-## Dependencies
+**Build interactive virtual cockpit instrument panels from a photo.**
 
-panel-map depends only on [bootstrap](https://getbootstrap.com) for display of the info card on the right side. 
-## Usage
+`panel-map` turns a cockpit photo into a deployable web app where hovering an
+instrument shows its picture and description, and clicking opens its manual. It
+is two things in one repository:
 
-Import the component as you normally do, and add it wherever you like in your JSX views as below:
+1. **[`@staski/panel-map`](https://www.npmjs.com/package/@staski/panel-map)** — a
+   small **Vue 3 component** that renders the interactive panel (the runtime).
+2. A **vision-to-deploy toolchain** (`scripts/`) that goes from a cockpit photo
+   to a ready-to-serve `dist.zip` — mostly automatically. Claude's vision detects
+   and labels the instruments; deterministic tools validate, refine, enrich, and
+   build.
 
-```javascript           
+> Designed for desktop displays — the layout puts an info card beside the panel,
+> so it isn't intended for phones/tablets.
+
+<!-- TODO: replace with a screenshot of the running app (panel + info-card popup) -->
+![panel-map](public/images/cockpitPanel.png)
+
+---
+
+## How it works
+
+```
+cockpit photo ─▶ vision (Claude) ─▶ areas.json ─▶ validate/clean ─▶ EDIT (browser)
+                                                                          │
+   dist.zip ◀─ npm build ◀─ sync assets ◀─ enrich ◀─ web-scale ◀─────────┘
+```
+
+- **areas.json** is the single source of truth — one file describing every
+  instrument's box, title, description, picture and manual.
+- Only the **edit** step is manual: a browser editor opens with the photo and
+  boxes pre-loaded so you can nudge/rename/delete, then hit *Save*.
+- Pictures, texts and manuals come from a reusable **instrument database**, and
+  are loaded by the app **at runtime** — so you can swap them on the server
+  without rebuilding.
+
+See [`scripts/PANELMAP_WORKFLOW.md`](scripts/PANELMAP_WORKFLOW.md) for the full
+workflow and [`scripts/INSTRUMENT_IDENTIFICATION.md`](scripts/INSTRUMENT_IDENTIFICATION.md)
+for the instrument-recognition rules the vision pass follows.
+
+---
+
+## Quick start — photo → deployable app
+
+```sh
+git clone git@github.com:staski/panel-map.git
+cd panel-map
+npm install                 # on Apple Silicon, use: npm install --ignore-scripts
+
+# after Claude has produced an areas.json for your photo:
+scripts/build_panel.sh --image cockpit.jpg --areas areas.json --name mypanel --max-mb 1.5
+```
+
+`build_panel.sh` runs the whole pipeline — validate → **edit in the browser** →
+web-scale the image → enrich from the catalog → sync assets from the database →
+`npm run build` → package **`dist.zip`**. Deploy that anywhere (it matches the
+`scripts/put.sh` / `scripts/update.sh` sftp-upload + unzip helpers).
+
+Just want to develop the component or preview the demo?
+
+```sh
+npm run dev                 # local playground (uses the local component source)
+```
+
+---
+
+## The `areas.json` contract
+
+```json
+{
+  "name": "panel",
+  "image": "images/cockpit.jpg",
+  "areas": [
+    {
+      "title": "Airspeed Indicator",
+      "shape": "circle",
+      "coords": [232, 100, 60],
+      "text": "Indicated airspeed in knots.",
+      "img":  "images/airspeed.jpg",
+      "doc":  "docs/airspeed.pdf"
+    },
+    { "title": "Garmin GNS430", "shape": "rect", "coords": [893, 63, 1197, 202] }
+  ]
+}
+```
+
+- **`title`** (required) — the human instrument name; the key the whole toolchain
+  matches on.
+- **`shape`** + **`coords`** (required) — `circle` = `[cx, cy, r]`, `rect` =
+  `[x1, y1, x2, y2]`, in the image's natural pixel space.
+- **`text` / `img` / `doc`** (optional) — description, popup picture, and manual.
+  `enrich_areas.js` fills these from the catalog if you leave them out.
+- **`image`** (top level) — the panel background photo, served to the app.
+
+---
+
+## Using the component (`@staski/panel-map`)
+
+```sh
+npm i @staski/panel-map     # peer dependency: vue ^3
+```
+
+```vue
 <template>
-  <PanelMap  :src="url" :map="map"/>
+  <PanelMap :src="imageUrl" :map="map" />
 </template>
 
 <script>
+import PanelMap from '@staski/panel-map'
+import '@staski/panel-map/style.css'      // bundled Bootstrap-based card styles
 
-
-import  PanelMap from './PanelMap/PanelMap.vue';
-import images from './images';
-import docs from './docs';
-
-
-var panelAreas = [
-    {
-      name: 'g52',
-      shape: 'rect',
-      coords: [352,194,524,355],
-      fillColor: 'rgb(255,100,0,0.0)',
-      id: '1',
-      img: images.imgDemo,
-      title: 'Garmin G5 EFIS (as HSI)',
-      href: docs.docDemo,
-      width: "18rem",
-      text: "Example description: this is a Garmin G5 EFIS"
-    },
-    {
-      name: 'avidyne',
-      shape: 'rect',
-      coords: [898,66,1194,198],
-      fillColor: 'rgb(100,255,0,0.0)',
-      id: '2',
-      title: 'Avidyne IFD440 navigator',
-      img: images.imgDemo,
-      href: docs.docDemo,
-      width: "18rem",
-      text: "Example description: this is an Avidyne IFD440 navigator"
+export default {
+  components: { PanelMap },
+  data() {
+    return {
+      imageUrl: '/images/cockpit.jpg',
+      map: {
+        name: 'my-panel',
+        areas: [
+          { title: 'Airspeed Indicator', shape: 'circle', coords: [232, 100, 60],
+            text: 'Indicated airspeed in knots.',
+            img: '/images/airspeed.jpg', href: '/docs/airspeed.pdf' },
+          { title: 'Garmin GNS430', shape: 'rect', coords: [893, 63, 1197, 202] }
+        ]
+      }
     }
-  ];
-
-  export default {
-  name: 'App',
-  components: {
-    PanelMap,
-  },
-  computed: {
-    url() {
-      return images.imgCockpitPanel
-    },
-    map(){
-      return {
-        areas: panelAreas,
-        name: 'panel-dexpl',
-      };
-    },
   }
 }
 </script>
 ```
-## Properties
 
+| Prop  | Type   | Description |
+|-------|--------|-------------|
+| `src` | String | URL of the cockpit panel image |
+| `map` | Object | `{ name, areas }` — see below |
 
-|Props|Type|Description|Default|        
-|---|---|---|---| 
-|***map***|*Object*|object containing a unique name and an array of `areas`, for a description of these `areas`, see below |*required*|
-|***src***|*String*|the URL pointing to the image of the cockpit panel|*required*|
+Each **area**: `title`, `shape` (`rect`\|`circle`) and `coords` are required;
+`text` (card description), `img` (popup picture URL) and `href` (manual opened on
+click) are optional. The component scales the coords from the image's natural
+size to the displayed size, so they always track the served image.
 
-The `areas` attribute of the `map` prop has to be an array of objects describing the highlighted areas with the following elements:
+> The demo app (`src/App.vue`) fetches its `areas.json` at runtime and resolves
+> the `img`/`doc` paths to URLs before passing them to the component — which is
+> why assets can be replaced on the server without a rebuild.
 
-```javascript
-{
-  name: String // describing the instrument in questions. This string is the anchor for the text element displayed in the popup
-  shape: String // either 'rect' or 'circle'
-  coords: [Number] // the coordinates of the shape as in area map
-  fillColor: Color // the color of the shape when highlighted
-  id: Number // a unique ID
-  width: String // the width of the image. Used for scaling images to a common size
-  title: String // displayed as title of the popup
-  img: Image // displayed in the popup
-  doc: Document // opened in a new browser tab when clicking the instrument
-  text: String // the description of the instrument displayed in the card 
-}
+---
+
+## The toolchain (`scripts/`)
+
+| Script | Role |
+|--------|------|
+| `panelmap_from_image.py` | validate & clean `areas.json` (+ optional overlay); `--dims` |
+| `panelmap_editor.html`   | dependency-free **browser editor** — drag/resize/rename/delete, undo |
+| `panelmap_refine.py`     | snap circles to instrument bezels (`ring` / `bbox` methods) |
+| `scale_panel.py`         | downscale the image **and** coords together for the web |
+| `enrich_areas.js`        | fill `img`/`text`/`doc` from `instrument_catalog.json` |
+| `sync_assets.js`         | copy the referenced pictures/docs from the instrument DB into `public/` |
+| `edit_server.py`         | serve the editor pre-loaded and receive the saved map (used by the pipeline) |
+| `build_panel.sh`         | **orchestrator** — photo/areas.json → `dist.zip` |
+| `instrument_catalog.json`| maps instrument types → standard picture, text and manual |
+
+**Instrument database.** A directory (default `~/panelMap`, or `$PANELMAP_DB`)
+laid out as `images/` and `docs/` — your reusable library of instrument pictures
+and manuals. The catalog names the file each instrument type uses; `sync_assets`
+copies just the ones a given panel references. `sync_assets` also runs on
+`npm install` (`postinstall`).
+
+---
+
+## Repository layout
+
+```
+src/PanelMap/PanelMap.vue   the published @staski/panel-map component
+src/App.vue, public/        the demo app (runtime-loads public/panel/areas.json)
+scripts/                    the toolchain + docs (WORKFLOW / INSTRUMENT_IDENTIFICATION)
+vite.config.js              app build (default: local component; --mode published)
+vite.config-lib.js          library build → dist-lib/
 ```
 
-## Getting started
-
-The easiest way to getting started is cloning this repository and then filling the images, docs, texts with your corresponding data.
+## Development
 
 ```sh
-git clone git@github.com:staski/panel-map.git
-cd vpanel
-npm install
-npm run dev
+npm run dev              # demo against the LOCAL component source (playground)
+npm run dev:published    # demo against the published @staski/panel-map
+npm run build            # build the app → dist/
+npm run stage:lib        # build the library → dist-lib/  (then: cd dist-lib && npm publish)
 ```
 
-this will bring up a local server with the demo panel. Bring your own images and docs for your instruments. See https://github.com/staski/panel-map for advanced options. The demo should look like this.
+The demo doubles as the component's development playground; `--mode published`
+swaps in the real npm package to sanity-check the consumer path.
 
+## Status
 
-![image](demoPanel.jpg)
+- **Component** — published on npm as `@staski/panel-map` (current: **1.0.3**).
+- **Toolchain** — works end to end: vision → areas.json → edit → enrich → sync →
+  build.
+- **Automation** — one-command local build (`build_panel.sh`) is in place;
+  generalising it to a server/CI environment is the next step.
+- **Editor** — title editing is in; a couple of interaction refinements
+  (double-click focus, in-field undo) are open.
+
 ## License
 
-Distributed with an MIT License. See LICENSE.txt for more details!
-
-Copyright (c) 2023 Carl Philipp Staszkiewicz
+MIT — see [LICENSE](LICENSE). Copyright © 2023–2026 Carl Philipp Staszkiewicz.

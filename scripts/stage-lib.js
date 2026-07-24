@@ -23,10 +23,11 @@ if (!fs.existsSync(dist)) {
 }
 
 fs.copyFileSync(path.join(__dirname, 'package.lib.json'), path.join(dist, 'package.json'));
-for (const f of ['README.md', 'LICENSE']) {
-  const src = path.join(root, f);
-  if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dist, f));
-}
+// the npm package gets the component-only README (scripts/README.lib.md), not the
+// project's front-page README.md; LICENSE comes from the repo root.
+fs.copyFileSync(path.join(__dirname, 'README.lib.md'), path.join(dist, 'README.md'));
+const lic = path.join(root, 'LICENSE');
+if (fs.existsSync(lic)) fs.copyFileSync(lic, path.join(dist, 'LICENSE'));
 
 const pkg = JSON.parse(fs.readFileSync(path.join(dist, 'package.json'), 'utf8'));
 console.log(`staged ${pkg.name}@${pkg.version} in dist-lib/`);
