@@ -26,9 +26,10 @@
         </svg>
       </div>
 
-      <!-- info card — its column is always reserved (desktop), so showing the
-           card never resizes the panel; on mobile it's a bottom sheet -->
-      <div class="pm-card">
+      <!-- info card — a reserved column beside the panel on hover devices (so
+           showing it never resizes the panel); on touch it flows below/beside
+           the photo and the page scrolls -->
+      <div class="pm-card" :class="{ 'pm-card-empty': !current }">
         <div v-if="current" class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <span class="fw-semibold">{{ current.title }}</span>
@@ -46,7 +47,7 @@
             <span v-else class="text-muted small">Click the instrument to open its manual.</span>
           </div>
         </div>
-        <div v-else class="pm-hint d-none d-md-block text-muted small p-2">
+        <div v-else class="pm-hint text-muted small p-2">
           Hover an instrument to see its details.
         </div>
       </div>
@@ -56,30 +57,31 @@
 
 <style>
 .pm-root { width: 100%; }
-.pm-stage { display: flex; gap: 1rem; align-items: flex-start; }
-.pm-imgwrap { position: relative; flex: 1 1 auto; min-width: 0; }
+.pm-stage { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.pm-imgwrap { position: relative; flex: 1 1 320px; min-width: 0; }
 .pm-img { display: block; width: 100%; height: auto; }
 .pm-overlay { position: absolute; inset: 0; width: 100%; height: 100%;
   -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .pm-bg { fill: transparent; pointer-events: all; }
 .pm-hot { fill: rgba(0, 0, 0, 0); stroke: transparent; stroke-width: var(--pm-sw, 3);
   pointer-events: all; cursor: pointer; transition: fill .1s, stroke .1s; }
-.pm-hot:hover, .pm-hot.pm-active { fill: rgba(57, 160, 255, .18); stroke: #2b8aef; }
-/* the card column is reserved so hovering never reflows the panel (no flicker) */
-.pm-card { flex: 0 0 20rem; }
+.pm-hot:hover, .pm-hot.pm-active { fill: rgba(57, 160, 255, .18); }  /* subtle fill, no border */
+.pm-card { flex: 1 1 18rem; min-width: 0; }
 .pm-card .card { max-width: 100%; }
 
-/* touch devices (no hover): hint the hotspots so they're discoverable by tap */
-@media (hover: none) {
-  .pm-hot { stroke: rgba(70, 150, 245, .45); }
+/* hover devices (desktop): reserve the card column so hovering never reflows /
+   resizes the panel image (which would flicker); the card sits beside it. */
+@media (hover: hover) {
+  .pm-stage { flex-wrap: nowrap; }
+  .pm-card { flex: 0 0 20rem; }
 }
 
-/* narrow screens: panel goes full width, card becomes a bottom sheet */
-@media (max-width: 768px) {
-  .pm-stage { flex-direction: column; }
-  .pm-card { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1050;
-    flex: none; max-height: 60vh; overflow: auto; }
-  .pm-card .card { border-radius: 12px 12px 0 0; box-shadow: 0 -6px 20px rgba(0, 0, 0, .25); }
+/* touch devices (no hover): the card flows in normal document order — beside the
+   photo when there's room, wrapping directly below it on a narrow (portrait)
+   screen — and takes no space until an instrument is tapped; the page scrolls. */
+@media (hover: none) {
+  .pm-hot { stroke: rgba(70, 150, 245, .45); }
+  .pm-card-empty { display: none; }
 }
 </style>
 
