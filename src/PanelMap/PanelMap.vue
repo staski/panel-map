@@ -1,5 +1,5 @@
 <template>
-  <div class="pm-root">
+  <div class="pm-root" :class="{ 'pm-touch': isTouch }">
     <div class="pm-stage">
       <!-- panel image with an SVG hotspot overlay (coords are in the image's
            natural pixel space; the viewBox scales them to any display size) -->
@@ -57,8 +57,10 @@
 
 <style>
 .pm-root { width: 100%; }
-.pm-stage { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
-.pm-imgwrap { position: relative; flex: 1 1 320px; min-width: 0; }
+/* default (touch / no hover): stacked — the panel keeps the full width at all
+   times and the card flows underneath, so showing it never resizes the photo */
+.pm-stage { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; }
+.pm-imgwrap { position: relative; width: 100%; }
 .pm-img { display: block; width: 100%; height: auto; }
 .pm-overlay { position: absolute; inset: 0; width: 100%; height: 100%;
   -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -66,23 +68,24 @@
 .pm-hot { fill: rgba(0, 0, 0, 0); stroke: transparent; stroke-width: var(--pm-sw, 3);
   pointer-events: all; cursor: pointer; transition: fill .1s, stroke .1s; }
 .pm-hot:hover, .pm-hot.pm-active { fill: rgba(57, 160, 255, .18); }  /* subtle fill, no border */
-.pm-card { flex: 1 1 18rem; min-width: 0; }
+.pm-card { width: 100%; }
 .pm-card .card { max-width: 100%; }
 
-/* hover devices (desktop): reserve the card column so hovering never reflows /
-   resizes the panel image (which would flicker); the card sits beside it. */
-@media (hover: hover) {
-  .pm-stage { flex-wrap: nowrap; }
-  .pm-card { flex: 0 0 20rem; }
+/* NON-touch devices with room (desktop): card in a reserved column beside the
+   panel — reserved so hovering never reflows/resizes the image (flicker).
+   Narrow desktop windows keep the stacked layout above.
+   Keyed off .pm-touch (set in JS), because `@media (hover: …)` misreports on
+   iPadOS desktop-mode and can't distinguish a wide landscape phone. */
+@media (min-width: 768px) {
+  .pm-root:not(.pm-touch) .pm-stage { flex-direction: row; align-items: flex-start; }
+  .pm-root:not(.pm-touch) .pm-imgwrap { flex: 1 1 auto; width: auto; min-width: 0; }
+  .pm-root:not(.pm-touch) .pm-card { flex: 0 0 20rem; width: auto; }
 }
 
-/* touch devices (no hover): the card flows in normal document order — beside the
-   photo when there's room, wrapping directly below it on a narrow (portrait)
-   screen — and takes no space until an instrument is tapped; the page scrolls. */
-@media (hover: none) {
-  .pm-hot { stroke: rgba(70, 150, 245, .45); }
-  .pm-card-empty { display: none; }
-}
+/* touch devices: hint the hotspots so they're discoverable by tap, and let the
+   card take no space until an instrument is tapped */
+.pm-touch .pm-hot { stroke: rgba(70, 150, 245, .45); }
+.pm-touch .pm-card-empty { display: none; }
 </style>
 
 <script>
@@ -105,6 +108,7 @@ export default defineComponent({
       imgH: 0,
       hoverArea: null,  // shown while hovering (desktop)
       pinnedArea: null, // shown after a tap, until dismissed (touch)
+      isTouch: false,   // drives the stacked layout (see mounted)
     };
   },
   computed: {
@@ -113,6 +117,14 @@ export default defineComponent({
     isPinned() { return !!this.pinnedArea && this.current === this.pinnedArea; },
     strokeW() { return Math.max(1, this.imgW / 400); },
     cardImgWidth() { return (this.current && this.current.width) || '10rem'; },
+  },
+  mounted() {
+    // Detect touch capability in JS, not via `@media (hover: none)`: iPadOS
+    // Safari requests desktop sites by default and then reports `hover: hover`,
+    // and a landscape phone is wide enough to pass a width breakpoint — both
+    // put the card beside the photo. maxTouchPoints is reliable on iPadOS.
+    this.isTouch = typeof window !== 'undefined' &&
+      (('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0);
   },
   beforeUnmount() { clearTimeout(this._lpTimer); },
   methods: {
