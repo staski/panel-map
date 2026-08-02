@@ -59,6 +59,10 @@ web-scale the image → enrich from the catalog → sync assets from the databas
 `npm run build` → package **`dist.zip`**. Deploy that anywhere (it matches the
 `scripts/put.sh` / `scripts/update.sh` sftp-upload + unzip helpers).
 
+Assets are referenced **relative to wherever the zip is unpacked**, so it works
+in the web root or any subdirectory as-is. To pin an absolute path instead, use
+`--base /fly/detes/panel/` (or `--base /` for the web root).
+
 Just want to develop the component or preview the demo?
 
 ```sh

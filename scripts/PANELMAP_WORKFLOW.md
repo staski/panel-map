@@ -139,7 +139,15 @@ the image + coords (`scale_panel.py`); enriches from the catalog; syncs the
 referenced instrument pictures/docs from the DB; runs `npm run build`; and
 packages **`dist.zip`** (ready for `put.sh` / `update.sh`). Flags: `--no-edit`,
 `--clean` (lean dist — wipes stale `public/images`+`docs` first), `--db DIR`,
-`--mode published`, `--no-open`.
+`--mode published`, `--no-open`, `--base PATH`.
+
+**Where the app is served from (`--base`).** By default the build references
+every asset **relative to wherever `dist.zip` is unpacked** (`--base ./`), so the
+same zip works in the web root or in any subdirectory (e.g.
+`…/fly/detes/panel/`) with no reconfiguration. Pass an absolute path to pin it
+instead — `--base /fly/detes/panel/`, or `--base /` for the web root. This
+governs both the bundled JS/CSS and the runtime `panel/`, `images/`, `docs/`
+lookups (the app resolves them against `import.meta.env.BASE_URL`).
 
 > **Size heads-up:** `dist.zip` bundles the referenced instrument **manuals**,
 > which can be large (a full GNS430 / GI-275 / GNC355 pilot guide is 10–25 MB

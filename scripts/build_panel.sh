@@ -19,6 +19,10 @@
 #   --max-mb X      web image size budget (default 1.5)
 #   --db DIR        instrument database (default: $PANELMAP_DB or ~/panelMap)
 #   --mode M        build mode: local (default) | published
+#   --base PATH     where the app is served from (default './' = relative to
+#                   wherever dist.zip is unpacked — works in any subdirectory).
+#                   Pass an absolute path to pin it, e.g. --base /fly/detes/panel/
+#                   or --base / to serve from the web root.
 #   --clean         wipe public/images + public/docs first (lean production dist)
 #   --no-edit       skip the interactive editor (use areas.json as-is)
 #   --no-open       don't auto-open the browser for the edit step
@@ -31,7 +35,7 @@ cd "$ROOT"
 
 # ---- defaults / args ----
 IMAGE=""; AREAS=""; NAME=""; MAXMB="1.5"; DB="${PANELMAP_DB:-$HOME/panelMap}"
-MODE="local"; CLEAN=0; EDIT=1; OPEN=1
+MODE="local"; BASE="./"; CLEAN=0; EDIT=1; OPEN=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --image) IMAGE="$2"; shift 2;;
@@ -40,13 +44,16 @@ while [ $# -gt 0 ]; do
     --max-mb) MAXMB="$2"; shift 2;;
     --db) DB="$2"; shift 2;;
     --mode) MODE="$2"; shift 2;;
+    --base) BASE="$2"; shift 2;;
     --clean) CLEAN=1; shift;;
     --no-edit) EDIT=0; shift;;
     --no-open) OPEN=0; shift;;
-    -h|--help) sed -n '2,32p' "$0"; exit 0;;
+    -h|--help) sed -n '2,36p' "$0"; exit 0;;
     *) echo "build_panel: unknown argument: $1" >&2; exit 2;;
   esac
 done
+# the app concatenates BASE_URL + "panel/areas.json" etc., so it needs a trailing slash
+case "$BASE" in */) ;; *) BASE="$BASE/";; esac
 [ -n "$IMAGE" ] || { echo "build_panel: --image is required" >&2; exit 2; }
 [ -n "$AREAS" ] || { echo "build_panel: --areas is required" >&2; exit 2; }
 [ -f "$IMAGE" ] || { echo "build_panel: image not found: $IMAGE" >&2; exit 2; }
@@ -85,8 +92,12 @@ step "5/7  Sync instrument assets from the DB ($DB)"
 node scripts/sync_assets.js --db "$DB"
 
 # ---- 6. build the web app ----
-step "6/7  Build the web app (mode: $MODE)"
-if [ "$MODE" = "published" ]; then npm run build:published; else npm run build; fi
+step "6/7  Build the web app (mode: $MODE, base: $BASE)"
+if [ "$MODE" = "published" ]; then
+  npm run build:published -- --base="$BASE"
+else
+  npm run build -- --base="$BASE"
+fi
 
 # ---- 7. package ----
 step "7/7  Package dist.zip"
