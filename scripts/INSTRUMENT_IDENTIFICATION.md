@@ -100,6 +100,29 @@ under-count because clusters are dense and yokes hide some. Work systematically:
 - **Cross-check right-side / engine clusters too** (manifold pressure, tach, EGT,
   OAT, fuel/oil) — not just the primary flight group.
 
+## Aircraft registration — always look for it
+
+Nearly every cockpit photo shows the aircraft's registration, and it is almost
+always legible. **Whenever you can read it, record it in `areas.json` as a
+top-level `"aircraft": "<registration>"`** — the build turns that into the page
+title *"&lt;registration&gt; Instrument Panel"*. Do **not** map it as an area;
+it is a placard, not an instrument.
+
+Where to look, in order:
+
+- **A placard on the panel** — usually top-left of the instrument panel or on the
+  glareshield, e.g. `D-ETES`, `D-EGPS`.
+- **Avionics displays** — the transponder or GPS often shows it as the flight ID
+  (a Garmin GTX may render it without the hyphen, e.g. `DETES` → write
+  `D-ETES`).
+- **The airframe/data plate** or a checklist placard, if visible.
+
+Registration formats: a country prefix, a hyphen and letters — `D-` Germany,
+`G-` UK, `F-` France, `OE-` Austria, `HB-` Switzerland, `PH-` Netherlands — or a
+US **N-number** with no hyphen (`N737PL`). Normalise to the hyphenated form when
+the source omits the hyphen. If it genuinely cannot be read, omit the field
+rather than guessing.
+
 ## Common GA instruments — recognition cues
 
 ### The "six-pack" (round analog gauges)

@@ -24,7 +24,8 @@
 #                   panel — feeding a built areas.json back with the ORIGINAL
 #                   photo would scale the coords a second time.
 #   --aircraft NAME page title becomes "<NAME> Instrument Panel"
-#                   (default: the "aircraft" field in areas.json, if present)
+#                   (default: the "aircraft" field in areas.json, which the
+#                   vision step fills from the registration placard)
 #   --title TEXT    full page title, overriding --aircraft
 #   --favicon PATH  browser icon, relative to the served root, e.g.
 #                   images/detes-icon.png (default: the "favicon" field in

@@ -14,6 +14,7 @@ toolchain keys on it:
 {
   "name": "panel",                     // optional (defaults to "panel")
   "image": "images/cockpitPanel.png",  // panel background photo (required for the runtime app)
+  "aircraft": "D-ETES",                // registration — record it whenever it is legible
   "areas": [
     {
       "title": "Airspeed Indicator",    // REQUIRED — the human instrument name
@@ -41,11 +42,16 @@ Contract, most important first:
 - Top-level **`image`** is the panel background photo (required for the runtime
   app); `name` is optional. `text` / `img` / `doc` are optional — `enrich_areas.js`
   fills them from the catalog.
-- **`aircraft`** (optional) sets the browser page title to
-  *"&lt;aircraft&gt; Instrument Panel"*; **`favicon`** (optional) points at the
-  browser icon, e.g. `images/detes-icon.png` — synced from the instrument DB like
-  any other asset. Both can be overridden per build (`--aircraft` / `--title` /
-  `--favicon`); without either, the build falls back to the defaults in `.env`
+- **`aircraft`** — the registration, e.g. `"D-ETES"`. **Whenever the vision pass
+  can read it from the photo, it must be recorded here** (see *Aircraft
+  registration* in `INSTRUMENT_IDENTIFICATION.md`); omit it only if it genuinely
+  isn't legible. The build turns it into the page title
+  *"&lt;aircraft&gt; Instrument Panel"*. It is a placard, not an instrument — do
+  not also map it as an area.
+- **`favicon`** (optional) points at the browser icon, e.g.
+  `images/detes-icon.png` — synced from the instrument DB like any other asset.
+  Both can be overridden per build (`--aircraft` / `--title` / `--favicon`);
+  without either, the build falls back to the defaults in `.env`
   (*"Instrument Panel"* and the bundled `favicon.svg`).
 - **`imageSize`: `[w, h]`** records *which image size the coords belong to*.
   Written by `scale_panel.py` (and by the validator when absent), and checked by
