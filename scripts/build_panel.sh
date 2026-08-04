@@ -117,7 +117,9 @@ step(){ echo; echo "━━ $* ━━"; }
 
 # ---- 1. validate + clean ----
 step "1/7  Validate & clean areas.json"
-python3 scripts/panelmap_from_image.py --areas "$AREAS" --image "$IMAGE"
+# --no-overlay: the editor (next step) shows the map, and the overlay would
+# otherwise be written next to the areas file — i.e. into the served public/panel/
+python3 scripts/panelmap_from_image.py --areas "$AREAS" --image "$IMAGE" --no-overlay
 
 # ---- 2. interactive edit ----
 if [ "$EDIT" -eq 1 ]; then

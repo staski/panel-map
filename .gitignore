@@ -6,4 +6,5 @@
 # build output & dependencies
 dist/
 dist-lib/
+dist.zip
 node_modules/
