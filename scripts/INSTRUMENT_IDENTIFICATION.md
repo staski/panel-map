@@ -43,9 +43,10 @@ RMIs and ADF indicators from different makers (Garmin GI-106A, King KI
 model guesses are the most common vision-pass error. Title them by function
 instead:
 
-- `CDI` — vertical needle, OBS knob, TO/FR flag, **no** glideslope needle
+- `CDI` — **vertical white** needle, OBS knob, TO/FR flag, **no** glideslope needle
 - `CDI/Glideslope` — as above **plus** a horizontal GS needle / GS flags
-- `HSI` — course needle integrated with a heading compass card
+- `HSI` — course arrow (usually **yellow/orange**, and free to point in **any**
+  direction) integrated with a **rotating** heading compass card
 - `ADF Indicator` — plain pointer on a card, **no** TO/FR flag and no
   deviation dots
 
@@ -146,6 +147,23 @@ rather than guessing.
 
 ### Navigation indicators (round)
 
+> **CDI vs HSI — the most common mis-identification.** This has gone wrong
+> repeatedly: a CDI gets labelled an HSI. Two cues settle it at panel-photo
+> resolution, before you look at anything else:
+>
+> | | **CDI** (incl. CDI/Glideslope) | **HSI** |
+> |---|---|---|
+> | Needle direction | **always vertical** — plus a **horizontal** one with glideslope, forming a fixed cross | the course arrow points in **any** direction |
+> | Needle colour | usually **white** | usually **yellow or orange** |
+> | Compass card | fixed scale, set by the `OBS` knob | **rotates**, slaved to heading |
+>
+> The reason is mechanical: a CDI's deviation bar only slides left↔right across a
+> fixed scale, so it **cannot tilt**. An HSI's course arrow is set against a
+> *rotating* heading card, so it usually sits at an angle.
+>
+> Vertical white needle → **CDI** (add glideslope if a horizontal needle crosses
+> it). Bold yellow/orange arrow pointing off-axis → **HSI**.
+
 - **CDI / VOR indicator** — round; a **fixed vertical lubber line** with a
   **horizontal scale** the needle moves across to show lateral course / cross-track
   deviation; often a `TO`/`FROM` flag. **Key tell: a small circular `OBS`
@@ -158,8 +176,10 @@ rather than guessing.
   ILS approaches (two needles forming a cross).
 - **HSI (Horizontal Situation Indicator)** — round; combines heading card and
   course-deviation needle in one instrument. Only call it an HSI if the compass
-  card actually **rotates/slaves to heading**; a fixed-card course indicator —
-  even one with a glideslope needle — is a plain **CDI**, not an HSI.
+  card actually **rotates/slaves to heading** *and* the course arrow can point in
+  a direction other than straight up — typically a bold **yellow/orange** arrow.
+  A fixed-card indicator with a vertical white needle — even one with a
+  glideslope needle — is a plain **CDI**, not an HSI.
 - **Magnetic Compass** — round wet compass, usually top-center of the panel or on
   the windscreen post; a panel-mounted *repeater* can appear elsewhere.
 
