@@ -63,6 +63,12 @@ Assets are referenced **relative to wherever the zip is unpacked**, so it works
 in the web root or any subdirectory as-is. To pin an absolute path instead, use
 `--base /fly/detes/panel/` (or `--base /` for the web root).
 
+To go back and refine a panel you already built, use `scripts/build_panel.sh
+--update` — it reuses the previous build's map together with the web image it
+belongs to. (Re-feeding a built `areas.json` with the *original* photo would
+scale its coordinates a second time; `areas.json` records an `imageSize` so the
+tools warn when a map and image don't match.)
+
 Just want to develop the component or preview the demo?
 
 ```sh

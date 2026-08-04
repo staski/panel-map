@@ -113,6 +113,9 @@ def main():
         c = a.get("coords")
         if isinstance(c, list):
             a["coords"] = [int(round(v * scale)) for v in c]
+    # record which image size these coords belong to, so later runs (and the
+    # editor) can detect a mismatch instead of silently scaling them twice
+    doc["imageSize"] = [nw, nh]
     # point 'image' at the new file, keeping any directory prefix
     old = doc.get("image")
     newbase = os.path.basename(out_image)

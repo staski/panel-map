@@ -41,6 +41,20 @@ Contract, most important first:
 - Top-level **`image`** is the panel background photo (required for the runtime
   app); `name` is optional. `text` / `img` / `doc` are optional — `enrich_areas.js`
   fills them from the catalog.
+- **`imageSize`: `[w, h]`** records *which image size the coords belong to*.
+  Written by `scale_panel.py` (and by the validator when absent), and checked by
+  the validator and the editor — see below.
+
+### Coordinate space: coords belong to ONE image size
+
+`coords` are pixels in a specific image. Feed a map back with a **differently
+sized** image and every shape is silently re-scaled — they contract toward the
+top-left and shrink (a map built for a 1944×1458 web image, reopened against the
+3600×2700 original, lands at ~54% of where it should be). That is what
+`imageSize` guards: the validator and the editor **warn** on a mismatch. They
+never auto-correct — pair the map with the image it was made for instead. To
+refine an existing panel, use `build_panel.sh --update` (below), which reuses the
+matching pair.
 - **Validate before continuing:** always run `panelmap_from_image.py` (below) on
   the areas.json. It checks the schema — a missing `title`, wrong `shape`, or
   malformed `coords` — and writes back a cleaned copy, catching slips immediately.
@@ -140,6 +154,22 @@ referenced instrument pictures/docs from the DB; runs `npm run build`; and
 packages **`dist.zip`** (ready for `put.sh` / `update.sh`). Flags: `--no-edit`,
 `--clean` (lean dist — wipes stale `public/images`+`docs` first), `--db DIR`,
 `--mode published`, `--no-open`, `--base PATH`.
+
+**Refining an existing panel (`--update`).** To go back and adjust a panel you
+already built, don't re-feed the built `areas.json` with the original photo — its
+coords are in the *web-scaled* image's space, so they would be scaled a second
+time. Instead:
+
+```sh
+scripts/build_panel.sh --update
+```
+
+This reuses `public/panel/areas.json` **together with the web image it belongs
+to** (`public/images/…`), skips the scaling step (the image is already web-sized,
+so the coords pass through untouched), and runs edit → enrich → sync → build →
+zip as usual. It exits with a clear message if there is no previous build, and
+refuses `--image`/`--areas` (it supplies them) and `--clean` (which would delete
+the image it reuses).
 
 **Where the app is served from (`--base`).** By default the build references
 every asset **relative to wherever `dist.zip` is unpacked** (`--base ./`), so the

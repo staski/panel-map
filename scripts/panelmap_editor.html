@@ -50,6 +50,9 @@
   #titleInput:disabled { opacity:.45; }
   #titleInput:focus { outline:none; border-color:var(--accent2); }
   .hint { color:var(--muted); font-size:11.5px; }
+  #warn { display:none; width:100%; padding:8px 12px; background:#5a1f1f; color:#ffd9d9;
+          border-bottom:1px solid #7d2c2c; font-size:12.5px; }
+  #warn.show { display:block; }
   /* SVG shapes */
   .shape { fill:rgba(34,211,107,.06); stroke:var(--accent); stroke-width:var(--sw,3); cursor:move; }
   .shape.sel { stroke:var(--accent2); fill:rgba(57,160,255,.12); }
@@ -72,6 +75,7 @@
   <button class="btn primary" id="saveBtn" style="display:none">💾 Save &amp; continue build</button>
   <span id="status">Load a panel image and its <b>areas.json</b> (or drag &amp; drop both here).</span>
 </div>
+<div id="warn"></div>
 <div id="stage">
   <div id="canvasWrap">
     <img id="panelImg" alt="">
@@ -174,12 +178,31 @@ function setup(){
     const s = imgW / 500;                       // size UI relative to image resolution
     svg.style.setProperty("--sw", Math.max(1.5, s).toFixed(2));
   }
+  checkImageSize();
   const ok = imgReady && jsonReady;
   $("undoBtn").disabled = !ok || undoStack.length === 0;
   $("revertBtn").disabled = !ok;
   $("downloadBtn").disabled = !ok;
   if (ok) render();
   status();
+}
+
+/* ---------- coordinate-space check ----------
+   areas.json coords are only valid for the image size they were made for. If a
+   map is reloaded with a differently-sized image (e.g. the original photo after
+   the map was web-scaled), every shape silently drifts toward the top-left. */
+function checkImageSize(){
+  const w = $("warn");
+  if (!imgReady || !jsonReady || !doc) { w.className = ""; return; }
+  const rec = doc.imageSize;
+  if (!Array.isArray(rec) || rec.length !== 2) { w.className = ""; return; }
+  if (rec[0] === imgW && rec[1] === imgH) { w.className = ""; return; }
+  const f = rec[0] ? (imgW / rec[0]) : 0;
+  w.innerHTML = `⚠️ <b>Coordinate-space mismatch.</b> These areas were made for a ` +
+    `<b>${rec[0]}×${rec[1]}</b> image, but the loaded image is <b>${imgW}×${imgH}</b> ` +
+    `(factor ≈ ${f.toFixed(3)}). The shapes below will not line up — load the image ` +
+    `these coords belong to, or re-scale both together (scale_panel.py).`;
+  w.className = "show";
 }
 
 /* ---------- geometry helpers ---------- */

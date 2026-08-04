@@ -154,6 +154,30 @@ def clean_areas(doc):
     return doc
 
 
+def check_image_size(doc, w, h):
+    """Compare the coordinate space recorded in areas.json with the image we were
+    actually given. Coords are only meaningful for the image size they were made
+    for — feeding a map back with a differently-sized image silently rescales
+    everything (shapes drift toward the top-left). Warn loudly; never auto-fix.
+    Records the size when it is absent, so later runs can be checked."""
+    rec = doc.get("imageSize")
+    if isinstance(rec, list) and len(rec) == 2:
+        rw, rh = rec
+        if [int(rw), int(rh)] != [int(w), int(h)]:
+            sx = w / rw if rw else 0
+            print(f"WARNING: coordinate-space mismatch — these coords were made for a "
+                  f"{rw}x{rh} image, but this image is {w}x{h}.\n"
+                  f"         The map will NOT line up (off by a factor of ~{sx:.3f}). "
+                  f"Use the image these coords belong to,\n"
+                  f"         or re-scale both together with scale_panel.py "
+                  f"(build_panel.sh --update reuses the matching pair).",
+                  file=sys.stderr)
+            return False
+    else:
+        doc["imageSize"] = [int(w), int(h)]
+    return True
+
+
 def bounds_check(areas, w, h):
     for a in areas:
         c = a["coords"]
@@ -247,6 +271,7 @@ def main():
 
     if image and os.path.isfile(image):
         w, h = image_size(image)
+        check_image_size(doc, w, h)
         bounds_check(areas, w, h)
 
     out = args.out or args.areas
