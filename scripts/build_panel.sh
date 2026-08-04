@@ -23,6 +23,13 @@
 #                   passed through untouched. Use this to refine an existing
 #                   panel — feeding a built areas.json back with the ORIGINAL
 #                   photo would scale the coords a second time.
+#   --aircraft NAME page title becomes "<NAME> Instrument Panel"
+#                   (default: the "aircraft" field in areas.json, if present)
+#   --title TEXT    full page title, overriding --aircraft
+#   --favicon PATH  browser icon, relative to the served root, e.g.
+#                   images/detes-icon.png (default: the "favicon" field in
+#                   areas.json, else the bundled favicon.svg). If it lives in the
+#                   instrument DB it is synced into public/ like any other asset.
 #   --name NAME     panel slug for the web image (default: image basename)
 #   --max-mb X      web image size budget (default 1.5)
 #   --db DIR        instrument database (default: $PANELMAP_DB or ~/panelMap)
@@ -44,9 +51,13 @@ cd "$ROOT"
 # ---- defaults / args ----
 IMAGE=""; AREAS=""; NAME=""; MAXMB="1.5"; DB="${PANELMAP_DB:-$HOME/panelMap}"
 MODE="local"; BASE="./"; CLEAN=0; EDIT=1; OPEN=1; UPDATE=0
+AIRCRAFT=""; TITLE=""; FAVICON=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --update) UPDATE=1; shift;;
+    --aircraft) AIRCRAFT="$2"; shift 2;;
+    --title) TITLE="$2"; shift 2;;
+    --favicon) FAVICON="$2"; shift 2;;
     --image) IMAGE="$2"; shift 2;;
     --areas) AREAS="$2"; shift 2;;
     --name) NAME="$2"; shift 2;;
@@ -143,7 +154,18 @@ step "5/7  Sync instrument assets from the DB ($DB)"
 node scripts/sync_assets.js --db "$DB"
 
 # ---- 6. build the web app ----
+# ---- page title + favicon: CLI > areas.json fields > .env defaults ----
+# read the fields from the enriched config we just wrote
+jsonfield(){ node -e "const fs=require('fs');try{process.stdout.write(String(JSON.parse(fs.readFileSync('public/panel/areas.json','utf8'))['$1']||''))}catch(e){}"; }
+[ -n "$AIRCRAFT" ] || AIRCRAFT="$(jsonfield aircraft)"
+[ -n "$FAVICON" ]  || FAVICON="$(jsonfield favicon)"
+[ -n "$TITLE" ] || { [ -n "$AIRCRAFT" ] && TITLE="$AIRCRAFT Instrument Panel"; }
+[ -n "$TITLE" ]   && export VITE_PANEL_TITLE="$TITLE"
+[ -n "$FAVICON" ] && export VITE_PANEL_FAVICON="$FAVICON"
+
 step "6/7  Build the web app (mode: $MODE, base: $BASE)"
+echo "     title:   ${VITE_PANEL_TITLE:-<.env default>}"
+echo "     favicon: ${VITE_PANEL_FAVICON:-<.env default>}"
 if [ "$MODE" = "published" ]; then
   npm run build:published -- --base="$BASE"
 else

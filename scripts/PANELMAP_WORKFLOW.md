@@ -41,6 +41,12 @@ Contract, most important first:
 - Top-level **`image`** is the panel background photo (required for the runtime
   app); `name` is optional. `text` / `img` / `doc` are optional — `enrich_areas.js`
   fills them from the catalog.
+- **`aircraft`** (optional) sets the browser page title to
+  *"&lt;aircraft&gt; Instrument Panel"*; **`favicon`** (optional) points at the
+  browser icon, e.g. `images/detes-icon.png` — synced from the instrument DB like
+  any other asset. Both can be overridden per build (`--aircraft` / `--title` /
+  `--favicon`); without either, the build falls back to the defaults in `.env`
+  (*"Instrument Panel"* and the bundled `favicon.svg`).
 - **`imageSize`: `[w, h]`** records *which image size the coords belong to*.
   Written by `scale_panel.py` (and by the validator when absent), and checked by
   the validator and the editor — see below.
@@ -154,6 +160,14 @@ referenced instrument pictures/docs from the DB; runs `npm run build`; and
 packages **`dist.zip`** (ready for `put.sh` / `update.sh`). Flags: `--no-edit`,
 `--clean` (lean dist — wipes stale `public/images`+`docs` first), `--db DIR`,
 `--mode published`, `--no-open`, `--base PATH`.
+
+**Page title and browser icon.** `index.html` carries `%VITE_PANEL_TITLE%` /
+`%VITE_PANEL_FAVICON%` placeholders, which Vite fills at build time. Defaults
+live in the committed `.env`; `build_panel.sh` overrides them per panel from
+`--aircraft` / `--title` / `--favicon`, falling back to the `aircraft` / `favicon`
+fields in `areas.json`. So `--aircraft D-ETES` yields
+`<title>D-ETES Instrument Panel</title>`. A favicon that lives in the instrument
+DB is copied into `public/` by `sync_assets.js` along with the other assets.
 
 **Refining an existing panel (`--update`).** To go back and adjust a panel you
 already built, don't re-feed the built `areas.json` with the original photo — its

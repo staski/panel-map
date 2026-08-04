@@ -64,7 +64,8 @@ function main(){
 
   const areas = Array.isArray(cfg) ? cfg : (cfg.areas || []);
   const refs = new Set();
-  if (!Array.isArray(cfg) && cfg.image) refs.add(cfg.image);   // panel background image
+  if (!Array.isArray(cfg) && cfg.image) refs.add(cfg.image);       // panel background image
+  if (!Array.isArray(cfg) && cfg.favicon) refs.add(cfg.favicon);   // browser icon
   for (const a of areas){ if (a.img) refs.add(a.img); if (a.doc) refs.add(a.doc); }
 
   let copied = 0, kept = 0;
