@@ -1,5 +1,9 @@
 # The vision prompt
 
+> **If you were pointed at this file by a prompt:** the fenced block below is
+> your instruction — follow it exactly, starting with reading both reference
+> documents in full. The rest of this file is background for the maintainer.
+
 The detection step runs in a **fresh Claude session** that has no memory of this
 project, so the prompt has to carry it. Everything below exists because a cold
 session got it wrong at least once — see the table at the end.
@@ -47,6 +51,25 @@ Create a panel map from the attached cockpit photo.
 ```
 
 ---
+
+## Short form
+
+Once this file is on `main`, the pasted prompt can just point at it:
+
+```
+Create a panel map from the attached cockpit photo.
+
+Fetch https://raw.githubusercontent.com/staski/panel-map/main/scripts/VISION_PROMPT.md
+and follow the instruction block in it exactly — including reading both linked
+reference documents in full before you start detecting.
+
+When you are done, tell me what you were unsure about.
+```
+
+Keep the *"including reading both linked reference documents in full"* clause.
+It is redundant on purpose: skipping a linked document is the single most common
+failure of this step, and this short form adds one more hop for it to be skipped
+at. Everything else is safe to leave to the file.
 
 Then bring the resulting `areas.json` and photo back here and run the build:
 
