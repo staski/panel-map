@@ -92,7 +92,9 @@ config never drift apart.
 
 ## Steps
 
-1. **Read the reference, then detect → `areas.json`.** First read
+1. **Read the reference, then detect → `areas.json`.** *(Running this in a fresh
+   session? `VISION_PROMPT.md` has the prompt to paste, which carries all of the
+   below.)* First read
    `INSTRUMENT_IDENTIFICATION.md` in full (required — see the callout above); it
    is an input to this step, not optional background. Then look at the photo and
    emit the manifest above, applying its recognition cues, titling rule, shape

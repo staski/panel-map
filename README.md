@@ -162,6 +162,7 @@ size to the displayed size, so they always track the served image.
 
 | Script | Role |
 |--------|------|
+| `VISION_PROMPT.md`       | the prompt to paste into a fresh session for the detection step |
 | `panelmap_from_image.py` | validate & clean `areas.json` (+ optional overlay); `--dims` |
 | `panelmap_editor.html`   | dependency-free **browser editor** — drag/resize/rename/delete, undo |
 | `panelmap_refine.py`     | snap circles to instrument bezels (`ring` / `bbox` methods) |
