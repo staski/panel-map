@@ -8,6 +8,11 @@
 // (img / doc, plus the panel image). This copies exactly those into public/, so
 // the app serves them — update the DB and re-run to refresh, no rebuild.
 //
+// The extension does not have to match: if the config asks for images/clock.png
+// and the database holds images/clock.jpg, that file is used and the config is
+// repointed at it (so the served name matches the actual format). Only the
+// extension may differ, and only within the same kind of asset.
+//
 // Runs as the postinstall step, and can be run by hand any time.
 //
 // Usage:
@@ -23,6 +28,27 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+
+const IMG_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'];
+const DOC_EXT = ['.pdf'];
+
+// Locate <rel> in the database, tolerating a different file extension: the
+// catalogue may say images/clock.png while the DB holds images/clock.jpg. Only
+// the extension may differ — same directory, same base name, and an image never
+// resolves to a document. Returns the path that actually exists, or null.
+function findByBaseName(db, rel){
+  const ext = path.extname(rel).toLowerCase();
+  const allowed = DOC_EXT.includes(ext) ? DOC_EXT : IMG_EXT;
+  const dir = path.dirname(rel);
+  const base = path.basename(rel, path.extname(rel)).toLowerCase();
+  let entries;
+  try { entries = fs.readdirSync(path.join(db, dir)); } catch (e) { return null; }
+  const hit = entries.find(f =>
+    path.basename(f, path.extname(f)).toLowerCase() === base &&
+    allowed.includes(path.extname(f).toLowerCase()));
+  if (!hit) return null;
+  return dir === '.' ? hit : `${dir}/${hit}`;
+}
 
 function parseArgs(argv){
   const a = {
@@ -70,19 +96,51 @@ function main(){
 
   let copied = 0, kept = 0;
   const missing = [];
+  const rewrite = new Map();                    // referenced path -> path found in the DB
+  const copy = (from, toRel) => {
+    const dst = path.join(args.public, toRel);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.copyFileSync(from, dst);
+    copied++;
+  };
   for (const rel of [...refs].sort()){
-    const src = path.join(args.db, rel);
-    const dst = path.join(args.public, rel);
-    if (fs.existsSync(src)){
-      fs.mkdirSync(path.dirname(dst), { recursive: true });
-      fs.copyFileSync(src, dst);
-      copied++;
+    // An exact name always wins — in the DB first, then whatever is already in
+    // public/. Only when neither exists do we accept a different extension, so a
+    // loose match can never displace a file that was named exactly right.
+    if (fs.existsSync(path.join(args.db, rel))){
+      copy(path.join(args.db, rel), rel);
       console.log('  ✓ ' + rel);
-    } else if (fs.existsSync(dst)){
+      continue;
+    }
+    if (fs.existsSync(path.join(args.public, rel))){
       kept++;                                   // already in public (e.g. panel photo placed by hand)
+      continue;
+    }
+    const found = findByBaseName(args.db, rel);
+    if (found){                                 // same instrument, different extension
+      copy(path.join(args.db, found), found);
+      rewrite.set(rel, found);
+      console.log(`  ✓ ${rel}  ->  ${found}  (extension differs in the DB)`);
     } else {
       missing.push(rel);
     }
+  }
+
+  // Point the config at the files that actually exist, so the served name and
+  // its content type agree (a JPEG must not be served as clock.png).
+  if (rewrite.size){
+    const fix = v => (v && rewrite.has(v)) ? rewrite.get(v) : v;
+    if (!Array.isArray(cfg)){
+      if (cfg.image) cfg.image = fix(cfg.image);
+      if (cfg.favicon) cfg.favicon = fix(cfg.favicon);
+    }
+    for (const a of areas){
+      if (a.img) a.img = fix(a.img);
+      if (a.doc) a.doc = fix(a.doc);
+    }
+    fs.writeFileSync(args.config, JSON.stringify(cfg, null, 2) + '\n');
+    console.log(`sync_assets: repointed ${rewrite.size} reference(s) in ${args.config} ` +
+                `to the file names found in the DB.`);
   }
 
   console.log(`sync_assets: ${copied} copied from ${args.db}, ${kept} already present, ` +

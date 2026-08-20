@@ -11,3 +11,9 @@ node_modules/
 
 # blog drafts + images (published on the website, not part of the toolchain)
 blog/
+
+# scratch output from test panels (regenerable)
+detes-fullmap/
+detes-new-map/
+detes-refine-compare/
+panelmap-preview/
