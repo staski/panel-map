@@ -48,6 +48,12 @@ Create a panel map from the attached cockpit photo.
 
 8. Finish by listing what you were unsure about (model numbers, ambiguous glass
    displays) so I can confirm those.
+
+9. WORK ECONOMICALLY - this run can hit a tool-call limit: produce all the
+   cluster crops in ONE script run rather than one call per crop, and write
+   areas.json as soon as you have a first complete pass, refining it in place
+   afterwards. If you are resumed after an interruption, re-read the areas.json
+   you already wrote and continue from it instead of starting over.
 ```
 
 ---
@@ -90,6 +96,7 @@ scripts/build_panel.sh --image cockpit.jpg --areas areas.json
 | Pass `--image` to the validator | Without it the validator cannot bounds-check the coords or record `imageSize`, which is what later protects the map from being scaled twice. |
 | Look at the overlay it just produced | Self-correction actually works — one session did this unprompted and caught its own mistakes before finishing. |
 | List the uncertainties | Model numbers are the known weak spot; geometry rarely needs correcting, names often do. |
+| Batch the crops, save `areas.json` early | Zooming into every cluster, validating and re-checking the overlay adds up to dozens of tool calls, and a run can hit the session's tool-call limit part-way. Batching lowers the count; an already-written `areas.json` turns a restart into "continue" rather than "start again". |
 
 ## Keeping this in sync
 
