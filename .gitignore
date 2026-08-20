@@ -8,3 +8,6 @@ dist/
 dist-lib/
 dist.zip
 node_modules/
+
+# blog drafts + images (published on the website, not part of the toolchain)
+blog/
