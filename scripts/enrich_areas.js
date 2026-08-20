@@ -37,6 +37,7 @@ function parseArgs(argv){
 }
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const tokens = s => String(s || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 
 // Build an ordered [key, entry] list: avionics, then engine, then standard.
 function catalogOrder(cat){
@@ -50,9 +51,16 @@ function catalogOrder(cat){
 
 function match(title, ordered){
   const t = norm(title);
+  const tk = tokens(title);
   for (const [key, entry] of ordered){
     for (const m of (entry.match || [])){
-      if (t.includes(norm(m))) return { key, entry };
+      const k = norm(m);
+      if (!k) continue;
+      // Very short keys must match a WHOLE word. As a substring they fire inside
+      // unrelated words — "dg" hit inside "unidentified gauge" and confidently
+      // labelled an explicitly-unidentified gauge a heading indicator.
+      const hit = k.length <= 3 ? tk.includes(k) : t.includes(k);
+      if (hit) return { key, entry };
     }
   }
   return null;

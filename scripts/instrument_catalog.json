@@ -115,6 +115,30 @@
       "doc": "docs/kx155.pdf",
       "text": "Bendix/King KX 155 — VHF nav/com radio with active/standby COM and NAV frequencies and a VOR/LOC/glideslope display."
     },
+    "rhotheta_sardf517": {
+      "match": ["sardf", "rt600"],
+      "image": "images/sardf517.png",
+      "doc": "docs/sardf517.pdf",
+      "text": "Rhotheta SAR-DF 517 direction finder with the RT-600 control/display unit — takes bearings on 121.5/243 MHz emergency frequencies and 406 MHz COSPAS-SARSAT beacons, so the crew can home on an ELT or PLB. Search-and-rescue equipment."
+    },
+    "technisonic_tdfm": {
+      "match": ["tdfm"],
+      "image": "images/tdfm136.png",
+      "doc": "docs/tdfm136.pdf",
+      "text": "Technisonic TDFM-136 VHF/UHF transceiver — a multi-band, multi-channel radio used to talk to ground agencies on public-safety and search-and-rescue frequencies, alongside the aircraft's normal com radios."
+    },
+    "garmin_gps400": {
+      "match": ["gps400", "gps500"],
+      "image": "images/gps400.png",
+      "doc": "docs/gps400.pdf",
+      "text": "Garmin GPS 400 — IFR-approach-capable GPS navigator with a moving-map display. GPS only: unlike the GNC 420 (adds a COM) or the GNS 430 (adds COM and VHF NAV), it has no radio of its own."
+    },
+    "psengineering_pma7000": {
+      "match": ["pma7000", "pma8000"],
+      "image": "images/pma7000.png",
+      "doc": "docs/pma7000.pdf",
+      "text": "PS Engineering PMA7000 audio panel and intercom — selects the COM and NAV audio sources, drives the marker-beacon receiver and provides the crew/passenger intercom."
+    },
     "bendixking_kma28": {
       "match": ["kma28"],
       "image": "images/kma28.jpg",
@@ -222,6 +246,11 @@
       "image": "images/fuel_flow.png",
       "text": "Fuel flow / fuel pressure to the engine."
     },
+    "hour_meter": {
+      "match": ["hourmeter", "hobbs", "tachtime"],
+      "image": "images/hour_meter.png",
+      "text": "Records elapsed engine or airframe hours (Hobbs or tach time) — the basis for maintenance intervals and logbook entries."
+    },
     "ammeter": {
       "match": ["ammeter", "voltmeter", "volt"],
       "image": "images/ammeter.jpeg",
@@ -274,6 +303,11 @@
       "match": ["verticalspeed", "vsi"],
       "image": "images/vertical_speed_indicator.jpg",
       "text": "Rate of climb or descent in feet per minute. The needle rests at zero (9 o'clock) in level flight."
+    },
+    "clock": {
+      "match": ["clock", "chronometer"],
+      "image": "images/clock.png",
+      "text": "Panel clock / chronometer showing the current time, usually with elapsed-time and flight-time functions for timing approaches and fuel legs."
     },
     "magnetic_compass": {
       "match": ["magneticcompass", "compass"],
